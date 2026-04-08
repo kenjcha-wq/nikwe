@@ -2,416 +2,221 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Nikwe OS - V111 Final (Real AI & Input Fixed)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NikWe - Open Source Kernel</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Sora:wght@100;400;600;800;900&family=Noto+Serif+SC:wght@700;900&display=swap');
-        
         :root {
-            --bg: #ffffff; 
-            --fg: #1e293b; 
-            --glass: rgba(255, 255, 255, 0.9);
-            --field: #ffffff; 
-            --accent: #1a1a1a;
-            --task-blue: #3b82f6;
+            --bg-base: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
         }
 
-        body {
-            font-family: 'Sora', 'PingFang SC', sans-serif;
-            height: 100vh; width: 100vw; overflow: hidden; margin: 0;
-            background-color: var(--bg);
-            background-image: radial-gradient(rgba(0,0,0,0.05) 1px, transparent 0);
-            background-size: 32px 32px;
-            color: var(--fg); transition: all 0.4s ease;
+        body, html {
+            margin: 0; padding: 0; height: 100%; overflow: hidden;
+            background: var(--bg-base);
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: var(--text-main);
         }
 
-        /* 首页标语精修 */
-        .slogan-box { font-family: 'PingFang SC', sans-serif; }
-        .slogan-main { font-size: 1.45rem; font-weight: 900; letter-spacing: 0.1em; color: var(--fg); line-height: 1.2; }
-        .slogan-en { font-family: 'Sora', sans-serif; font-size: 0.4rem; letter-spacing: 0.25em; opacity: 0.3; font-weight: 800; margin-top: 2px; }
-
-        /* 统一输入框 */
-        input, textarea, select {
-            background-color: var(--field) !important;
-            border: 1.5px solid rgba(0,0,0,0.06) !important;
-            border-radius: 18px !important;
-            padding: 12px 20px !important;
-            font-weight: 600 !important;
-            color: var(--fg) !important;
-            outline: none !important;
-        }
-        input:focus, textarea:focus {
-            border-color: var(--accent) !important;
-            box-shadow: 0 8px 20px -10px rgba(0,0,0,0.1);
-        }
-
-        /* 桌面组件布局 */
-        .widget-area { 
-            position: absolute; top: 0; left: 0; width: 100vw; height: 100vh;
-            display: flex; justify-content: flex-start; align-items: center;
-            padding: 0 8vw; pointer-events: none; z-index: 5; 
-        }
-        .widget-area > * { pointer-events: auto; }
-
-        .sticky-stack { position: relative; width: 300px; height: 260px; }
-        .sticky-card {
-            position: absolute; width: 100%; height: 100%; padding: 24px;
-            border-radius: 32px; transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-            cursor: pointer; border: 1.5px solid rgba(255,255,255,0.9);
-            box-shadow: 0 10px 40px -15px rgba(0,0,0,0.1);
-            overflow: hidden;
-        }
-
-        /* 时间/日期指示 */
-        .time-box { display: flex; flex-direction: column; align-items: center; }
-        #display-time { line-height: 0.8; margin-bottom: 25px; font-weight: 900; }
-        .date-line { display: flex; align-items: center; gap: 15px; font-size: 13px; font-weight: 800; text-transform: uppercase; }
-        .date-text { opacity: 0.3; letter-spacing: 0.5em; }
-        .task-indicator {
-            background: var(--task-blue); color: white; padding: 4px 12px; border-radius: 10px; font-size: 10px;
-            letter-spacing: 0.1em; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-            cursor: pointer; transition: all 0.3s ease;
-        }
-
-        /* 悬浮球 */
-        #ai-fab {
-            position: fixed; bottom: 35px; right: 35px; width: 56px; height: 56px;
-            border-radius: 18px; background: white; display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 15px 35px -10px rgba(0,0,0,0.1); cursor: pointer; z-index: 1001;
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); border: 1px solid rgba(0,0,0,0.05);
-        }
-
-        /* 面板控制 */
-        .panel-drawer {
-            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease;
-            transform: translateY(40px); opacity: 0; pointer-events: none; display: none; 
-            flex-direction: column;
-        }
-        .panel-drawer.visible { display: flex; }
-        .panel-drawer.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
-        
-        body.panel-active .master-dock-wrap, 
-        body.panel-active .widget-area,
-        body.panel-active #ai-fab { transform: translateY(100px); opacity: 0; pointer-events: none; }
-
-        .glass-panel {
-            background: var(--glass); backdrop-filter: blur(50px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.6); box-shadow: 0 40px 100px -20px rgba(0,0,0,0.08);
-        }
-
-        /* 便签样式 */
-        .color-dot {
-            width: 1.25rem; height: 1.25rem; border-radius: 9999px;
-            border: 1px solid rgba(0,0,0,0.05); cursor: pointer;
-            transition: transform 0.2s ease;
-        }
-        .color-dot:hover { transform: scale(1.2); }
-
-        .mood-dot {
-            width: 2rem; height: 2rem; border-radius: 0.5rem; cursor: pointer;
+        /* 1. 品牌背景层 (NikWe) - 强制可见 */
+        #branding-layer {
+            position: fixed; inset: 0;
             display: flex; align-items: center; justify-content: center;
-            transition: all 0.3s ease; background: rgba(0,0,0,0.05);
+            z-index: 1; pointer-events: none; user-select: none;
         }
-        .mood-dot:hover { background: rgba(0,0,0,0.1); }
-        .mood-dot.active { background: #1e293b; color: white; }
-
-        .hub-capsule {
-            background: white; padding: 2rem; border-radius: 2.5rem;
-            border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-            transition: all 0.3s ease;
+        .brand-logo-text {
+            font-size: 22vw; font-weight: 800;
+            color: #f1f3f6; /* 确定的浅灰底色 */
+            letter-spacing: -0.06em; text-transform: uppercase;
+            line-height: 1;
         }
 
-        /* 笔记本工具栏 */
-        .nb-toolbar {
-            display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem;
-            border-bottom: 1px solid rgba(0,0,0,0.05); margin-bottom: 1rem;
-            position: sticky; top: 0; background: rgba(255,255,255,0.8);
-            backdrop-filter: blur(12px); z-index: 10;
+        /* 2. 状态栏 - 极致微调 */
+        #top-bar { position: fixed; top: 0; width: 100%; padding: 45px 60px; z-index: 100; pointer-events: none; }
+        .top-bar-content { display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto; }
+        .slogan-box { display: flex; flex-direction: column; align-items: flex-end; }
+        .slogan-cn { font-size: 15px; font-weight: 700; color: var(--text-main); letter-spacing: 0.15em; }
+        .slogan-en { font-size: 8px; font-weight: 400; color: var(--text-muted); letter-spacing: 0.5em; text-transform: uppercase; margin-top: 5px; }
+
+        /* 3. 中心时间区 */
+        #center-hub {
+            position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
+            text-align: center; z-index: 10; transition: opacity 0.5s ease;
+        }
+        .clock-display { font-size: 11rem; font-weight: 100; letter-spacing: -0.05em; color: var(--text-main); line-height: 1; }
+        .date-display { margin-top: 10px; font-size: 0.9rem; color: var(--text-muted); letter-spacing: 0.3em; text-transform: uppercase; }
+
+        /* 4. 底部交互阵列 (Search + Dock) */
+        #bottom-hub {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+            z-index: 2000; transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        #bottom-hub.hidden { transform: translate(-50%, 250px); opacity: 0; pointer-events: none; }
+
+        .search-input-pill {
+            width: 380px; padding: 12px 24px; border-radius: 20px;
+            background: rgba(255,255,255,0.7); backdrop-filter: blur(20px);
+            border: 1px solid white; text-align: center; outline: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.02); font-size: 0.9rem;
         }
 
-        .chat-scroll::-webkit-scrollbar { width: 4px; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
-
-        .master-dock-wrap { position: fixed; bottom: 30px; left: 0; width: 100vw; display: flex; justify-content: center; align-items: center; z-index: 1000; pointer-events: none; }
-        .master-dock-wrap > * { pointer-events: auto; }
-        .dock-row { display: flex; gap: 16px; padding: 10px 24px; background: rgba(255,255,255,0.4); border-radius: 24px; backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.2); }
-        .dock-icon { width: 2.75rem; height: 2.75rem; border-radius: 1rem; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; cursor: pointer; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        
-        .btn-black {
-            background: black; color: white; padding: 0.75rem 2rem;
-            border-radius: 1rem; font-weight: 900; text-transform: uppercase;
-            font-size: 10px; letter-spacing: 0.1em; transition: all 0.3s ease;
-            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+        #dock-bar {
+            background: rgba(255,255,255,0.7); padding: 8px 12px; border-radius: 24px;
+            display: flex; gap: 6px; border: 1px solid white;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.03);
         }
+        .dock-item {
+            width: 50px; height: 50px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.25s; color: var(--text-muted);
+        }
+        .dock-item:hover { background: white; color: var(--accent); transform: translateY(-10px); }
+
+        /* 5. AI 悬浮核心 (nikai) - 极简深色球 */
+        #ai-core {
+            position: fixed; right: 50px; bottom: 50px;
+            width: 48px; height: 48px; border-radius: 50%;
+            background: #1e293b; /* 深色更有核心感 */
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 2500;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+            transition: all 0.4s ease;
+        }
+        #ai-core:hover { transform: scale(1.1); box-shadow: 0 0 20px rgba(59,130,246,0.3); }
+        .ai-pulse-dot {
+            width: 4px; height: 4px; background: white; border-radius: 50%;
+            animation: ai-pulse 2.5s infinite;
+        }
+        @keyframes ai-pulse {
+            0%, 100% { transform: scale(1); opacity: 0.5; box-shadow: 0 0 0 0 rgba(255,255,255,0.4); }
+            50% { transform: scale(1.5); opacity: 1; box-shadow: 0 0 0 8px rgba(255,255,255,0); }
+        }
+
+        /* 6. 应用窗口容器 */
+        #app-window {
+            position: fixed; inset: 0; margin: auto;
+            width: 780px; height: 82vh; border-radius: 40px;
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(60px); -webkit-backdrop-filter: blur(60px);
+            border: 1px solid white; box-shadow: 0 100px 200px rgba(0,0,0,0.1);
+            z-index: 1500; opacity: 0; transform: scale(0.97) translateY(40px);
+            pointer-events: none; transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        #app-window.active { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+        #app-window.fs { width: 100vw; height: 100vh; border-radius: 0; }
+
+        .win-bar { padding: 24px 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
+        .win-close { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; transition: 0.2s; color: #cbd5e1; }
+        .win-close:hover { background: #fee2e2; color: #ef4444; }
     </style>
 </head>
-<body class="theme-auto">
+<body>
 
-    <div id="wallpaper-layer" class="fixed inset-0 z-[-1] bg-center bg-cover transition-opacity duration-1000"></div>
-    <div class="nik-watermark select-none text-slate-400 opacity-5 fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[30vw] font-black z-[-10]">NIKWE</div>
-
-    <div class="widget-area" id="widget-root">
-        <div class="widget-box sticky-stack" id="ds-stickies"></div>
+    <!-- 1. 品牌水印 -->
+    <div id="branding-layer">
+        <div class="brand-logo-text">NikWe</div>
     </div>
 
-    <header class="fixed top-12 left-12 right-12 flex justify-between items-start z-[100] select-none">
-        <div class="slogan-box">
-            <div class="slogan-main">智者，人生。</div>
-            <div class="slogan-en uppercase">WISDOM, LIFE.</div>
+    <!-- 2. 状态栏 -->
+    <header id="top-bar">
+        <div class="top-bar-content">
+            <div class="flex flex-col gap-1">
+                <div class="flex items-center gap-2 text-slate-800 font-bold">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                    <span id="loc-text" class="text-[11px] uppercase tracking-tighter">Connecting</span>
+                </div>
+                <div id="weather-text" class="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Update...</div>
+            </div>
+            <div class="slogan-box">
+                <div class="slogan-cn">智者，人生</div>
+                <div class="slogan-en">Wise, Life</div>
+            </div>
         </div>
     </header>
 
-    <main id="main-content" class="relative flex flex-col items-center justify-center h-full z-[10]">
-        <div class="time-box">
-            <div id="display-time" class="text-8xl md:text-[11rem] tracking-tighter select-none force-black font-black">00:00</div>
-            <div class="date-line">
-                <span id="display-date" class="date-text">2026 / 04 / 07</span>
-                <div class="task-indicator" onclick="toggleUI('panel-hub')">
-                    <i data-lucide="list-checks" class="w-3.5 h-3.5"></i>
-                    <span id="cal-task-count">0</span> TASKS TODAY
+    <!-- 3. 中央枢纽 -->
+    <div id="center-hub">
+        <div class="clock-display" id="clock">00:00</div>
+        <div class="date-display">
+            <span id="date-text">...</span>
+            <span class="ml-6 font-bold text-blue-500" id="event-count">0 EVENTS</span>
+        </div>
+    </div>
+
+    <!-- 4. AI 悬浮核心 -->
+    <div id="ai-core" onclick="openApp('terminal.html', 'Nik Terminal')">
+        <div class="ai-pulse-dot"></div>
+    </div>
+
+    <!-- 5. 底部交互底座 -->
+    <div id="bottom-hub">
+        <input type="text" class="search-input-pill" placeholder="Ask Nik anything..." spellcheck="false">
+        <nav id="dock-bar"></nav>
+    </div>
+
+    <!-- 6. 全局窗口 -->
+    <div id="app-window">
+        <div class="win-bar">
+            <span id="app-title" class="text-[10px] font-bold uppercase tracking-[0.3em] text-slate-400">Terminal</span>
+            <div class="flex gap-4 items-center">
+                <div onclick="toggleFs()" class="cursor-pointer text-slate-300 hover:text-blue-500 transition-colors">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/></svg>
+                </div>
+                <div onclick="closeApp()" class="win-close">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
                 </div>
             </div>
         </div>
-        
-        <div id="global-search-container" class="h-14 flex items-center px-6 gap-4 shadow-sm mt-12 bg-white/60 backdrop-blur-xl border border-black/5 rounded-[28px] w-[540px]">
-            <i data-lucide="search" class="w-5 h-5 opacity-20"></i>
-            <input type="text" id="global-search-input" class="bg-transparent border-none outline-none p-0 flex-1 text-[16px] font-bold" placeholder="Search or ask Nik...">
-            <button onclick="handleGlobalSearch()" class="bg-black text-white px-5 py-2 rounded-full text-[9px] font-black uppercase tracking-widest transition-all">Search</button>
+        <div class="h-[calc(100%-80px)] px-6 pb-6">
+            <iframe id="app-iframe" src="about:blank" class="w-full h-full rounded-[30px] border-0 bg-slate-50"></iframe>
         </div>
-    </main>
-
-    <!-- AI 悬浮球 -->
-    <div id="ai-fab" onclick="toggleUI('panel-ai')" title="Nik Assistant">
-        <svg viewBox="0 0 100 100" class="w-7 h-7"><path d="M20 20 L20 80 M20 20 L55 50 L55 20 M55 50 L90 80 L90 20" stroke="#1e293b" stroke-width="12" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
-    </div>
-
-    <!-- 底栏 -->
-    <div class="master-dock-wrap" id="main-dock">
-        <div class="dock-row">
-            <button onclick="toggleUI('panel-hub')" class="dock-icon" title="Hub"><i data-lucide="layout-grid" class="w-5 h-5"></i></button>
-            <button onclick="toggleUI('panel-nb')" class="dock-icon" title="Notebook"><i data-lucide="book-marked" class="w-5 h-5"></i></button>
-            <button onclick="toggleUI('panel-config')" class="dock-icon" title="Settings"><i data-lucide="settings-2" class="w-5 h-5"></i></button>
-        </div>
-    </div>
-
-    <!-- 事务中心 -->
-    <div id="panel-hub" class="fixed inset-x-0 bottom-0 m-auto w-[980px] h-[82vh] max-w-[98vw] glass-panel rounded-[40px] flex-col panel-drawer z-[1100] overflow-hidden">
-        <div class="flex justify-between items-center p-10 pb-4">
-            <h2 class="text-2xl font-black uppercase tracking-tighter">Transaction Hub</h2>
-            <button class="close-ui p-2 hover:bg-black/5 rounded-full"><i data-lucide="x" class="w-7 h-7"></i></button>
-        </div>
-        <div class="flex-1 overflow-y-auto p-10 pt-4 chat-scroll">
-            <section>
-                <div class="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 mt-4 mb-6">Memory Capsules</div>
-                <div class="mb-10"><button onclick="newSticky()" class="btn-black">+ NEW NOTE</button></div>
-                <div id="sticky-grid" class="space-y-6"></div>
-            </section>
-            
-            <section class="mt-20">
-                <div class="text-[10px] font-black uppercase tracking-[0.4em] opacity-30 mb-6">Strategic Objectives</div>
-                <div class="hub-capsule mb-10 space-y-5 max-w-xl mx-auto">
-                    <input type="text" id="todo-in" placeholder="Plan goal..." class="w-full !h-12 !text-lg">
-                    <div class="flex gap-4 items-end">
-                        <input type="datetime-local" id="todo-time" class="flex-1 !h-12">
-                        <button onclick="addTodo()" class="btn-black h-12">Add Plan</button>
-                    </div>
-                </div>
-                <div id="todo-list" class="space-y-4 mb-20"></div>
-            </section>
-        </div>
-    </div>
-
-    <!-- AI 面板 -->
-    <div id="panel-ai" class="fixed inset-x-0 bottom-0 top-0 m-auto w-[540px] h-[82vh] max-w-[96vw] glass-panel rounded-[32px] flex-col p-10 panel-drawer z-[1100]">
-        <div class="flex justify-between items-center mb-8">
-            <div class="flex items-center gap-3"><h2 class="text-xs font-black uppercase tracking-widest opacity-40">Nik Assistant</h2></div>
-            <div class="flex gap-1">
-                <button onclick="toggleAiSettings()" class="p-2 hover:bg-black/5 rounded-xl"><i data-lucide="sliders" class="w-4 h-4"></i></button>
-                <button class="close-ui p-2"><i data-lucide="x" class="w-4 h-4"></i></button>
-            </div>
-        </div>
-        <div id="ai-cfg-box" class="absolute inset-x-10 top-24 glass-panel rounded-[24px] p-6 space-y-4 z-[2000] border-black/10 shadow-2xl hidden">
-            <div class="flex items-center justify-between"><span class="text-[10px] font-black uppercase opacity-60">Matrix Sync</span><button onclick="toggleAiSettings()"><i data-lucide="x" class="w-4 h-4"></i></button></div>
-            <input id="cfg-url" placeholder="API Endpoint (https://...)" class="w-full text-sm">
-            <input id="cfg-key" type="password" placeholder="API Key" class="w-full text-sm">
-            <input id="cfg-model" placeholder="Model (gpt-4o)" class="w-full text-sm">
-            <button onclick="saveSysCfg()" class="w-full bg-black text-white py-3 rounded-xl font-black uppercase text-[9px] shadow-md mt-2">Apply Settings</button>
-        </div>
-        <div id="ai-chat-box" class="flex-1 overflow-y-auto pr-2 mb-6 chat-scroll flex flex-col space-y-4"></div>
-        <div class="relative">
-            <textarea id="ai-prompt" class="w-full h-24 p-4 text-[15px] resize-none" placeholder="Ask Nik..."></textarea>
-            <button onclick="callAI()" class="absolute right-4 bottom-4 bg-black text-white w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"><i data-lucide="arrow-up" class="w-5 h-5"></i></button>
-        </div>
-    </div>
-
-    <!-- 笔记本 -->
-    <div id="panel-nb" class="fixed inset-x-0 bottom-0 m-auto w-[1000px] h-[88vh] max-w-[98vw] glass-panel rounded-[40px] flex-col panel-drawer z-[1100] p-10">
-        <div class="flex justify-between items-center mb-6"><h2 class="text-2xl font-black uppercase tracking-tighter">Archive</h2><button class="close-ui p-2"><i data-lucide="x"></i></button></div>
-        <div class="flex-1 flex flex-col overflow-hidden bg-white/50 rounded-[3rem] border border-black/5 shadow-inner">
-            <div class="nb-toolbar">
-                <button onclick="formatDoc('bold')" class="nb-tool-btn"><i data-lucide="bold" class="w-4 h-4"></i></button>
-                <button onclick="formatDoc('italic')" class="nb-tool-btn"><i data-lucide="italic" class="w-4 h-4"></i></button>
-                <button onclick="formatDoc('insertUnorderedList')" class="nb-tool-btn"><i data-lucide="list" class="w-4 h-4"></i></button>
-            </div>
-            <div id="nb-editor" contenteditable="true" class="flex-1 p-10 outline-none text-[17px] leading-relaxed overflow-y-auto chat-scroll"></div>
-        </div>
-        <div class="flex gap-4 mt-6">
-            <button onclick="saveNb()" class="btn-black flex-1">ARCHIVE</button>
-            <button onclick="callExternalDoc('WPS')" class="px-6 py-2 border border-black/10 rounded-2xl text-[9px] font-black uppercase">WPS</button>
-        </div>
-        <div id="nb-hist" class="mt-8 h-32 overflow-y-auto chat-scroll space-y-2 border-t pt-6"></div>
     </div>
 
     <script>
-        const $ = id => document.getElementById(id);
-        const LS = { 
-            get: k => {
-                try {
-                    const val = localStorage.getItem('nik_v111_v8_' + k);
-                    return val ? JSON.parse(val) : null;
-                } catch(e) { return null; }
-            },
-            set: (k, v) => localStorage.setItem('nik_v111_v8_' + k, JSON.stringify(v)) 
-        };
+        const appConfigs = [
+            { id: 'note', title: 'Note', url: 'smart_note.html', icon: '<path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"/>' },
+            { id: 'im', title: 'IM', url: 'im.html', icon: '<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>' },
+            { id: 'mail', title: 'Mail', url: 'mail.html', icon: '<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>' },
+            { id: 'cal', title: 'Plan', url: 'calendar.html', icon: '<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>' },
+            { id: 'cloud', title: 'Drive', url: 'cloud.html', icon: '<path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>' },
+            { id: 'term', title: 'Terminal', url: 'terminal.html', icon: '<polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>' },
+            { id: 'plus', title: 'Market', url: 'plus.html', icon: '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>' },
+            { id: 'set', title: 'Settings', url: 'settings.html', icon: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>' }
+        ];
 
-        let cfg = LS.get('cfg_obj') || { ai: { url: '', key: '', model: '' } };
-        let sticks = LS.get('sticks') || [], todos = LS.get('todos') || [], nbs = LS.get('nbs') || [], chatHistory = LS.get('chatHistory') || [];
+        const win = document.getElementById('app-window');
+        const iframe = document.getElementById('app-iframe');
+        const bottomHub = document.getElementById('bottom-hub');
+        const centerHub = document.getElementById('center-hub');
 
-        const MOODS = ['zap', 'brain', 'coffee', 'smile', 'moon', 'flame', 'heart', 'star'];
-        const COLORS = ['#ffffff', '#fef3c7', '#dcfce7', '#dbeafe', '#fce7f3', '#f1f5f9', '#1a1a1a'];
-
-        (function clock() {
-            const up = () => {
-                const n = new Date();
-                const dStr = n.toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' }).replace(/\//g, ' / ');
-                if($('display-time')) $('display-time').textContent = n.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
-                if($('display-date')) $('display-date').textContent = dStr;
-                const todayPrefix = n.toISOString().split('T')[0];
-                const count = todos.filter(t => t.time && t.time.startsWith(todayPrefix) && !t.done).length;
-                if($('cal-task-count')) $('cal-task-count').textContent = count;
-            };
-            setInterval(up, 1000); up();
-        })();
-
-        window.toggleUI = (id) => {
-            const panels = ['panel-nb', 'panel-hub', 'panel-ai', 'panel-config'];
-            let targetEl = $(id);
-            if (targetEl && targetEl.classList.contains('active')) { closeAllPanels(); return; }
-            panels.forEach(p => { const el = $(p); if (el) { el.classList.remove('active'); setTimeout(() => { if(!el.classList.contains('active')) el.classList.remove('visible'); }, 600); } });
-            if (targetEl) { targetEl.classList.add('visible'); setTimeout(() => { targetEl.classList.add('active'); document.body.classList.add('panel-active'); }, 10); } 
-            else { closeAllPanels(); }
-        };
-
-        function closeAllPanels() {
-            document.querySelectorAll('.panel-drawer').forEach(el => { el.classList.remove('active'); setTimeout(() => { if(!el.classList.contains('active')) el.classList.remove('visible'); }, 600); });
-            document.body.classList.remove('panel-active');
-            $('ai-cfg-box').classList.add('hidden');
+        function openApp(url, title) {
+            document.getElementById('app-title').innerText = title;
+            if (iframe.src.indexOf(url) === -1) iframe.src = url;
+            win.classList.add('active');
+            bottomHub.classList.add('hidden');
+            centerHub.style.opacity = "0.05";
         }
 
-        window.toggleAiSettings = () => $('ai-cfg-box').classList.toggle('hidden');
-        window.saveSysCfg = () => { 
-            cfg.ai.url = $('cfg-url').value; cfg.ai.key = $('cfg-key').value; cfg.ai.model = $('cfg-model').value; 
-            LS.set('cfg_obj', cfg); toggleAiSettings(); 
-        };
-
-        // 核心 AI 真实调用逻辑
-        async function fetchAI(prompt) {
-            const { url, key, model } = cfg.ai;
-            if(!url || !key) throw new Error("API Config Missing");
-            
-            const response = await fetch(`${url.replace(/\/+$/, '')}/chat/completions`, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${key}`
-                },
-                body: JSON.stringify({
-                    model: model || 'gpt-4o',
-                    messages: [{role: "user", content: prompt}],
-                    stream: false
-                })
-            });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const data = await response.json();
-            return data.choices[0].message.content;
+        function closeApp() {
+            win.classList.remove('active'); win.classList.remove('fs');
+            bottomHub.classList.remove('hidden'); centerHub.style.opacity = "1";
+            setTimeout(() => { if(!win.classList.contains('active')) iframe.src = "about:blank"; }, 500);
         }
 
-        window.callAI = async (extP = null) => {
-            const p = extP || $('ai-prompt').value.trim(); if(!p) return;
-            addMsg('user', p, 'You'); if(!extP) $('ai-prompt').value = '';
-            const botMsgEl = addMsg('bot', '...', 'Nik');
-            try { 
-                const res = await fetchAI(p); 
-                botMsgEl.textContent = res; 
-                chatHistory.push({ role: 'bot', text: res }); LS.set('chatHistory', chatHistory); 
-            } catch(e) { botMsgEl.textContent = "Error: " + e.message; }
-        };
-
-        function addMsg(role, txt, meta) {
-            const wrap = document.createElement('div'); wrap.className = `flex flex-col ${role==='user'?'items-end':'items-start'}`;
-            wrap.innerHTML = `<span class="msg-meta font-black text-[9px] opacity-30 uppercase mb-1">${meta}</span><div class="p-4 rounded-2xl max-w-[90%] text-[14px] leading-relaxed mb-4 shadow-sm ${role==='user'?'bg-slate-800 text-white':'bg-white text-slate-800 border'}">${txt}</div>`;
-            $('ai-chat-box').appendChild(wrap); $('ai-chat-box').scrollTop = $('ai-chat-box').scrollHeight;
-            if(role === 'user') { chatHistory.push({role: 'user', text: txt}); LS.set('chatHistory', chatHistory); }
-            return wrap.querySelector('div:last-child');
-        }
-
-        // 便签系统：修复输入 Bug
-        window.newSticky = () => { sticks.unshift({ id: 's-'+Date.now(), content: '', color: '#ffffff', mood: 'zap', desktop: true }); renderStickies(); renderWidgets(); LS.set('sticks', sticks); };
-        window.updateStickyData = (id, val) => { const s = sticks.find(x => x.id === id); if (s) { s.content = val; LS.set('sticks', sticks); renderWidgets(); } };
-        window.updateStickyAttr = (id, field, val) => { const s = sticks.find(x => x.id === id); if (s) { s[field] = val; renderStickies(); renderWidgets(); LS.set('sticks', sticks); } };
-        window.delSticky = (id) => { sticks = sticks.filter(x => x.id !== id); renderStickies(); renderWidgets(); LS.set('sticks', sticks); };
-        window.stickyToTodo = (id) => { 
-            const s = sticks.find(x => x.id === id); 
-            if (s && s.content) { 
-                todos.unshift({ id: 't-'+Date.now(), text: s.content, time: new Date().toISOString().slice(0,16), done: false }); 
-                renderTodos(); LS.set('todos', todos); toggleUI('panel-hub'); 
-            } 
-        };
-        window.bringFront = (id) => { const idx = sticks.findIndex(x => x.id === id); if(idx > -1) { sticks.unshift(sticks.splice(idx, 1)[0]); renderWidgets(); LS.set('sticks', sticks); } };
-
-        function renderStickies() {
-            const grid = $('sticky-grid'); if(!grid) return;
-            // 保持 innerHTML 仅在初始化或属性更新时重构，打字时仅更新内存数据以防丢失焦点
-            grid.innerHTML = sticks.map(s => `
-                <div class="hub-capsule" style="border-left: 12px solid ${s.color}">
-                    <textarea oninput="updateStickyData('${s.id}', this.value)" class="w-full !border-none !p-0 !bg-transparent h-20">${s.content}</textarea>
-                    <div class="mt-4 flex flex-wrap gap-4 items-center justify-between border-t border-black/5 pt-4">
-                        <div class="flex gap-1.5">${MOODS.map(m => `<div onclick="updateStickyAttr('${s.id}', 'mood', '${m}')" class="mood-dot ${s.mood===m?'active':''}"><i data-lucide="${m}" style="width: 1rem; height: 1rem;"></i></div>`).join('')}</div>
-                        <div class="flex gap-2">${COLORS.map(c => `<div onclick="updateStickyAttr('${s.id}', 'color', '${c}')" class="color-dot" style="background:${c}"></div>`).join('')}</div>
-                        <div class="flex gap-4">
-                            <button onclick="stickyToTodo('${s.id}')" class="text-[9px] font-black uppercase text-blue-600">Ref Schedule</button>
-                            <button onclick="delSticky('${s.id}')" class="text-[9px] font-black uppercase text-red-500">Delete</button>
-                        </div>
-                    </div>
-                </div>`).join('');
-            lucide.createIcons();
-        }
-
-        function renderWidgets() {
-            const stack = $('ds-stickies'); if(!stack) return;
-            const desktopItems = sticks.filter(x => x.desktop).slice(0, 5);
-            stack.innerHTML = desktopItems.map((s, i) => `<div class="sticky-card" onclick="bringFront('${s.id}')" style="z-index: ${50-i}; transform: translate(${i*12}px, ${i*12}px); background: ${s.color==='#ffffff'?'rgba(255,255,255,0.98)':s.color}; border-top: 15px solid rgba(0,0,0,0.03);"><p class="text-[13px] font-black line-clamp-6 opacity-70">${s.content || "..."}</p></div>`).join('');
-        }
-
-        window.addTodo = () => { const t = $('todo-in').value, tm = $('todo-time').value; if(t) { todos.unshift({ id: 't-'+Date.now(), text: t, time: tm, done: false }); $('todo-in').value = ''; renderTodos(); LS.set('todos', todos); } };
-        window.toggleTodo = (id) => { const t = todos.find(x => x.id === id); if(t) { t.done = !t.done; renderTodos(); LS.set('todos', todos); } };
-        window.delTodo = (id) => { todos = todos.filter(x => x.id !== id); renderTodos(); LS.set('todos', todos); };
-        function renderTodos() { const list = $('todo-list'); if(!list) return; list.innerHTML = todos.map(t => `<div class="hub-capsule flex items-center gap-5 !p-6"><input type="checkbox" ${t.done?'checked':''} onchange="toggleTodo('${t.id}')" class="w-5 h-5"><div class="flex-1"><p class="font-black text-sm ${t.done?'line-through opacity-20':''}">${t.text}</p><p class="text-[9px] font-black opacity-30 mt-1">${t.time ? t.time.replace('T', ' ') : ''}</p></div><button onclick="delTodo('${t.id}')" class="text-red-400 p-2"><i data-lucide="trash-2" class="w-4 h-4"></i></button></div>`).join(''); lucide.createIcons(); }
-
-        window.formatDoc = (cmd) => { document.execCommand(cmd, false, null); };
-        window.saveNb = () => { const c = $('nb-editor').innerHTML; if(c && c !== '<br>') { nbs.unshift({ content: c, date: new Date().toLocaleString() }); $('nb-editor').innerHTML = ''; renderNb(); LS.set('nbs', nbs); } };
-        function renderNb() { const hist = $('nb-hist'); if(!hist) return; hist.innerHTML = nbs.map(n => `<div class="hub-capsule !p-4 flex justify-between items-center cursor-pointer mb-2" onclick="$('nb-editor').innerHTML='${n.content}'"><span class="font-bold truncate text-xs">${n.content.replace(/<[^>]*>/g, '').substring(0, 40)}</span></div>`).join(''); }
+        function toggleFs() { win.classList.toggle('fs'); }
 
         window.onload = () => {
-            if($('cfg-url')) $('cfg-url').value = cfg.ai.url || ''; 
-            if($('cfg-key')) $('cfg-key').value = cfg.ai.key || ''; 
-            if($('cfg-model')) $('cfg-model').value = cfg.ai.model || '';
-            renderStickies(); renderWidgets(); renderTodos(); renderNb();
-            document.querySelectorAll('.close-ui').forEach(b => b.onclick = closeAllPanels); 
-            window.onkeydown = e => { if(e.key==='Escape') closeAllPanels(); }; 
-            lucide.createIcons(); 
+            const dock = document.getElementById('dock-bar');
+            dock.innerHTML = appConfigs.map(a => `<div class="dock-item" onclick="openApp('${a.url}','${a.title}')"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${a.icon}</svg></div>`).join('');
+            
+            setInterval(() => {
+                const now = new Date();
+                document.getElementById('clock').innerText = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
+                document.getElementById('date-text').innerText = now.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+            }, 1000);
         };
     </script>
 </body>
