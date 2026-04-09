@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NikNote Matrix Edition</title>
+    <!-- 引入基础库 -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useRef, useEffect } = React;
+
+        // --- 内置图标组件，解决外部库加载导致的 ReferenceError ---
+        const Icon = ({ name, size = 16, className = "" }) => {
+            const icons = {
+                Plus: <path d="M5 12h14m-7-7v14"/>,
+                Search: <><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></>,
+                Sparkles: <><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/><path d="M5 3v4"/><path d="M19 17v4"/><path d="M3 5h4"/><path d="M17 19h4"/></>,
+                Save: <><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></>,
+                Bold: <><path d="M14 12a4 4 0 0 0 0-8H6v8"/><path d="M15 20a4 4 0 0 0 0-8H6v8h9Z"/></>,
+                Italic: <><line x1="19" x2="10" y1="4" y2="4"/><line x1="14" x2="5" y1="20" y2="20"/><line x1="15" x2="9" y1="4" y2="20"/></>,
+                Underline: <><path d="M6 3v7a6 6 0 0 0 12 0V3"/><line x1="4" x2="20" y1="21" y2="21"/></>,
+                Strikethrough: <><path d="M16 4H9a3 3 0 0 0-2.83 4"/><path d="M14 12a4 4 0 0 1 0 8H6"/><line x1="4" x2="20" y1="12" y2="12"/></>,
+                List: <><line x1="8" x2="21" y1="6" y2="6"/><line x1="8" x2="21" y1="12" y2="12"/><line x1="8" x2="21" y1="18" y2="18"/><line x1="3" x2="3.01" y1="6" y2="6"/><line x1="3" x2="3.01" y1="12" y2="12"/><line x1="3" x2="3.01" y1="18" y2="18"/></>,
+                ListOrdered: <><line x1="10" x2="21" y1="6" y2="6"/><line x1="10" x2="21" y1="12" y2="12"/><line x1="10" x2="21" y1="18" y2="18"/><path d="M4 6h1v4"/><path d="M4 10h2"/><path d="M6 18H4c0-1 2-2 2-3s-1-1.5-2-1"/></>,
+                Table: <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18M15 3v18"/>,
+                Image: <><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></>,
+                Link: <><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></>,
+                AlignLeft: <><line x1="21" x2="3" y1="6" y2="6"/><line x1="15" x2="3" y1="12" y2="12"/><line x1="17" x2="3" y1="18" y2="18"/><line x1="7" x2="3" y1="12" y2="12"/></>,
+                AlignCenter: <><line x1="21" x2="3" y1="6" y2="6"/><line x1="17" x2="7" y1="12" y2="12"/><line x1="19" x2="5" y1="18" y2="18"/></>,
+                AlignRight: <><line x1="21" x2="3" y1="6" y2="6"/><line x1="21" x2="9" y1="12" y2="12"/><line x1="21" x2="7" y1="18" y2="18"/></>,
+                Undo: <><path d="M3 7V2h5"/><path d="M3 2c3.43 3.33 8.16 3.38 12 1.1a9 9 0 1 1-2.32 14.36"/></>,
+                Redo: <><path d="M21 7V2h-5"/><path d="M21 2c-3.43 3.33-8.16 3.38-12 1.1a9 9 0 1 0 2.32 14.36"/></>,
+                Quote: <><path d="M3 21c3 0 7-1 7-8V5H3v16Zm11 0c3 0 7-1 7-8V5h-7v16Z"/></>,
+                Trash2: <><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></>,
+                FileText: <><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></>,
+                FileCode: <><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><path d="m10 13-2 2 2 2"/><path d="m14 17 2-2-2-2"/></>,
+                Paperclip: <path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>,
+                ExternalLink: <><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" x2="21" y1="14" y2="3"/></>,
+                Cpu: <><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" x2="9" y1="1" y2="4"/><line x1="15" x2="15" y1="1" y2="4"/><line x1="9" x2="9" y1="20" y2="23"/><line x1="15" x2="15" y1="20" y2="23"/><line x1="20" x2="23" y1="9" y2="9"/><line x1="20" x2="23" y1="15" y2="15"/><line x1="1" x2="4" y1="9" y2="9"/><line x1="1" x2="4" y1="15" y2="15"/></>,
+                Terminal: <><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></>,
+                X: <><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>,
+                Check: <polyline points="20 6 9 17 4 12"/>,
+                Send: <><line x1="22" x2="11" y1="2" y2="13"/><polyline points="22 2 15 22 11 13 2 9 22 2"/></>
+            };
+            return (
+                <svg
+                    width={size}
+                    height={size}
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className={className}
+                >
+                    {icons[name] || null}
+                </svg>
+            );
+        };
+
+        /**
+         * Nik Matrix 智脑桥接函数
+         */
+        const callNikAI = (prompt, systemPrompt = "你是 Nik 矩阵智脑。") => {
+          return new Promise((resolve, reject) => {
+            const requestId = Date.now().toString() + Math.random().toString(36).substring(2);
+            
+            const handleMessage = (event) => {
+              const { type, requestId: responseId, content, error } = event.data;
+              if (type === 'MATRIX_AI_RESPONSE' && responseId === requestId) {
+                window.removeEventListener('message', handleMessage);
+                if (error) {
+                  reject(content);
+                } else {
+                  resolve(content);
+                }
+              }
+            };
+
+            window.addEventListener('message', handleMessage);
+            window.parent.postMessage({
+              type: 'MATRIX_AI_REQUEST',
+              requestId: requestId,
+              prompt: prompt,
+              systemPrompt: systemPrompt
+            }, '*');
+
+            setTimeout(() => {
+              window.removeEventListener('message', handleMessage);
+              reject("智脑响应超时，请检查底座连接。");
+            }, 60000);
+          });
+        };
+
+        const App = () => {
+          const [notes, setNotes] = useState([
+            { id: 1, title: '无标题文档', type: 'local', content: '<p>在这里开始你的深度思考...</p>', time: 'Just now' }
+          ]);
+          const [activeId, setActiveId] = useState(1);
+          const [search, setSearch] = useState('');
+          const [saveStatus, setSaveStatus] = useState('saved');
+          const [deleteConfirmId, setDeleteConfirmId] = useState(null); 
+          
+          const [showAi, setShowAi] = useState(false);
+          const [aiInput, setAiInput] = useState('');
+          const [aiMessages, setAiMessages] = useState([]); 
+          const [isAiLoading, setIsAiLoading] = useState(false);
+
+          const editorRef = useRef(null);
+          const imageInputRef = useRef(null);
+          const fileInputRef = useRef(null);
+          const aiScrollRef = useRef(null);
+
+          const activeNote = useMemo(() => 
+            notes.find(n => n.id === activeId) || notes[0], 
+          [activeId, notes]);
+
+          const exec = (cmd, val = null) => {
+            document.execCommand(cmd, false, val);
+            setSaveStatus('modified');
+          };
+
+          const saveNote = () => {
+            if (!editorRef.current) return;
+            setSaveStatus('saving');
+            const updatedContent = editorRef.current.innerHTML;
+            const updatedTitle = document.getElementById('note-title-input').value;
+
+            setNotes(prev => prev.map(n => 
+              n.id === activeId ? { ...n, title: updatedTitle, content: updatedContent, time: 'Just now' } : n
+            ));
+            setTimeout(() => setSaveStatus('saved'), 800);
+          };
+
+          const deleteNote = (id, e) => {
+            if (e) e.stopPropagation();
+            if (notes.length <= 1) return;
+            const newNotes = notes.filter(n => n.id !== id);
+            setNotes(newNotes);
+            if (activeId === id) setActiveId(newNotes[0].id);
+            setDeleteConfirmId(null);
+          };
+
+          const handleAiAction = async (type) => {
+            setIsAiLoading(true);
+            let prompt = aiInput;
+            let systemPrompt = "你是一个名为 'Nik' 的系统助手。你擅长写作优化、系统内容查找和深度思考。";
+
+            if (type === 'improve') {
+              const content = editorRef.current.innerText;
+              prompt = `请优化并润色以下文章，使其更加专业、优雅：\n\n${content}`;
+            } else if (type === 'search') {
+              const fileData = notes.map(n => `标题: ${n.title}, 时间: ${n.time}`).join('\n');
+              prompt = `查找桌面系统内容。当前文件库：\n${fileData}\n\n关键词: ${aiInput}`;
+            }
+
+            try {
+              const fullContent = await callNikAI(prompt, systemPrompt);
+              
+              const thoughtMatch = fullContent.match(/<think>([\s\S]*?)<\/think>/);
+              const thought = thoughtMatch ? thoughtMatch[1] : null;
+              const text = fullContent.replace(/<think>[\s\S]*?<\/think>/, '').trim();
+
+              setAiMessages(prev => [...prev, 
+                { role: 'user', text: aiInput || (type === 'improve' ? '润色文章' : '查找内容') }, 
+                { role: 'assistant', text, thought }
+              ]);
+            } catch (err) {
+              setAiMessages(prev => [...prev, { role: 'assistant', text: `智脑调用异常。`, thought: null }]);
+            } finally {
+              setAiInput('');
+              setIsAiLoading(false);
+            }
+          };
+
+          const insertTable = () => {
+            const tableHtml = `<table class="nik-table"><thead><tr><th>Header 1</th><th>Header 2</th></tr></thead><tbody><tr><td>-</td><td>-</td></tr></tbody></table><p><br></p>`;
+            exec('insertHTML', tableHtml);
+          };
+
+          const handleImageUpload = (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(file => {
+              const reader = new FileReader();
+              reader.onload = (event) => {
+                const imgHtml = `<div class="image-box" contenteditable="false" style="margin: 20px 0;"><img src="${event.target.result}" style="border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.08); max-width: 100%; border: 1px solid #f1f5f9;" /></div><p><br></p>`;
+                exec('insertHTML', imgHtml);
+              };
+              reader.readAsDataURL(file);
+            });
+          };
+
+          const handleFileUpload = (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              const fileHtml = `<div class="file-attach-card" contenteditable="false"><div style="display: flex; align-items: center; gap: 15px;"><div style="padding: 12px; background: #eff6ff; border-radius: 12px; color: #3b82f6;"><Icon name="Plus" /></div><div><div style="font-size: 14px; font-weight: 700; color: #1e293b;">${file.name}</div><div style="font-size: 10px; color: #94a3b8; text-transform: uppercase;">NikWe Cloud • ${(file.size/1024).toFixed(1)} KB</div></div></div></div><p><br></p>`;
+              exec('insertHTML', fileHtml);
+            }
+          };
+
+          const insertLink = () => {
+            const url = prompt('Enter URL:');
+            if (url) exec('createLink', url);
+          };
+
+          const launchExternal = (platform) => {
+            const urls = {
+              wps: 'https://www.kdocs.cn/',
+              word: 'https://www.microsoft365.com/launch/word',
+              google: 'https://docs.google.com/'
+            };
+            window.open(urls[platform], '_blank');
+          };
+
+          useEffect(() => {
+            if (editorRef.current && activeNote.type === 'local') {
+              editorRef.current.innerHTML = activeNote.content;
+              const titleInput = document.getElementById('note-title-input');
+              if (titleInput) titleInput.value = activeNote.title;
+              setSaveStatus('saved');
+            }
+          }, [activeId]);
+
+          useEffect(() => {
+            if (aiScrollRef.current) aiScrollRef.current.scrollTop = aiScrollRef.current.scrollHeight;
+          }, [aiMessages, isAiLoading]);
+
+          return (
+            <div className="flex h-screen w-full bg-slate-50/20 backdrop-blur-3xl overflow-hidden font-sans text-slate-900">
+              
+              <div className="w-80 border-r border-slate-200/50 flex flex-col bg-white/40">
+                <div className="p-8">
+                  <div className="flex justify-between items-center mb-8">
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 bg-slate-900 rounded-xl flex items-center justify-center shadow-lg">
+                        <div className="w-1.5 h-3 bg-white rounded-full"></div>
+                      </div>
+                      <h1 className="text-xl font-black tracking-tighter">NikNote</h1>
+                    </div>
+                    <button onClick={() => {
+                      const id = Date.now();
+                      setNotes([{ id, title: '无标题文档', type: 'local', content: '', time: 'Just now' }, ...notes]);
+                      setActiveId(id);
+                    }} className="w-9 h-9 flex items-center justify-center hover:bg-white rounded-2xl transition-all text-slate-400 hover:text-blue-500 shadow-sm border border-slate-100">
+                      <Icon name="Plus" size={20} />
+                    </button>
+                  </div>
+                  
+                  <div className="relative group">
+                    <Icon name="Search" className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
+                    <input 
+                      type="text" 
+                      placeholder="搜索文档库..."
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-slate-100 rounded-2xl text-xs focus:ring-1 focus:ring-blue-400 outline-none shadow-sm transition-all"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex-grow overflow-y-auto px-4 custom-scrollbar">
+                  <div className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] px-4 mb-4">Master Index</div>
+                  {notes.filter(n => n.title.toLowerCase().includes(search.toLowerCase())).map(note => (
+                    <div 
+                      key={note.id}
+                      onClick={() => setActiveId(note.id)}
+                      className={`group p-5 mb-3 rounded-[24px] cursor-pointer border transition-all duration-300 ${
+                        activeId === note.id 
+                        ? 'bg-white border-slate-200 shadow-xl shadow-slate-200/40 translate-x-1' 
+                        : 'bg-transparent border-transparent hover:bg-white/60'
+                      }`}
+                    >
+                      <div className="flex items-center gap-4 text-left relative">
+                        <div className={`p-2.5 rounded-xl transition-colors ${activeId === note.id ? 'bg-blue-50 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
+                          {note.type === 'wps' ? <Icon name="FileText" size={18} /> : <Icon name="FileCode" size={18} />}
+                        </div>
+                        <div className="flex-grow overflow-hidden relative pr-8">
+                          <div className={`text-xs font-bold truncate ${activeId === note.id ? 'text-slate-900' : 'text-slate-500'}`}>
+                            {note.title || 'Untitled'}
+                          </div>
+                          <div className="text-[9px] text-slate-400 uppercase mt-1 tracking-wider">{note.time}</div>
+                        </div>
+
+                        <div className="absolute right-0 top-1/2 -translate-y-1/2">
+                          {deleteConfirmId === note.id ? (
+                            <div className="flex gap-1 animate-in fade-in zoom-in duration-200">
+                              <button onClick={(e) => { e.stopPropagation(); deleteNote(note.id); }} className="p-1.5 bg-rose-500 text-white rounded-lg shadow-sm"><Icon name="Check" size={12} /></button>
+                              <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(null); }} className="p-1.5 bg-slate-200 text-slate-600 rounded-lg shadow-sm"><Icon name="X" size={12} /></button>
+                            </div>
+                          ) : (
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(note.id); }}
+                              className={`p-1.5 rounded-lg text-slate-300 hover:text-rose-500 hover:bg-rose-50 transition-all ${activeId === note.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                            >
+                              <Icon name="Trash2" size={12} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-6 border-t border-slate-100 bg-white/60">
+                  <div className="text-[10px] font-bold text-slate-300 uppercase tracking-widest mb-4 text-center">Cloud Suites</div>
+                  <div className="flex justify-around items-center">
+                    <button onClick={() => launchExternal('wps')} title="WPS" className="p-3 hover:bg-white rounded-2xl text-slate-400 hover:text-amber-500 transition-all border border-transparent hover:border-slate-100"><Icon name="FileText" size={22} /></button>
+                    <button onClick={() => launchExternal('word')} title="Office" className="p-3 hover:bg-white rounded-2xl text-slate-400 hover:text-blue-500 transition-all border border-transparent hover:border-slate-100"><Icon name="ExternalLink" size={22} /></button>
+                    <button onClick={() => launchExternal('google')} title="Google Docs" className="p-3 hover:bg-white rounded-2xl text-slate-400 hover:text-green-500 transition-all border border-transparent hover:border-slate-100"><Icon name="FileCode" size={22} /></button>
+                    <button onClick={() => setShowAi(!showAi)} title="Nik" className={`p-3 rounded-2xl transition-all border ${showAi ? 'bg-blue-600 text-white border-blue-600 shadow-lg' : 'bg-white text-slate-400 hover:text-blue-500'}`}><Icon name="Sparkles" size={22} /></button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex-grow flex flex-col relative bg-white">
+                <div className="h-16 px-10 flex justify-between items-center border-b border-slate-50">
+                  <div className="flex items-center gap-4">
+                    <div className={`w-2.5 h-2.5 rounded-full ${saveStatus === 'saving' ? 'bg-amber-400 animate-pulse' : saveStatus === 'modified' ? 'bg-slate-200' : 'bg-emerald-400 shadow-[0_0_8px_#34d399]'}`}></div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{saveStatus === 'saving' ? 'SYNCING...' : saveStatus === 'modified' ? 'UNSAVED' : 'COMMITTED'}</span>
+                  </div>
+                  
+                  <div className="flex items-center gap-4">
+                    <button onClick={saveNote} className={`px-6 py-2 rounded-2xl text-xs font-bold transition-all ${saveStatus === 'modified' ? 'bg-blue-600 text-white shadow-lg shadow-blue-100' : 'bg-slate-100 text-slate-400'}`}>
+                      SAVE DOCUMENT
+                    </button>
+                    <div className="h-4 w-px bg-slate-100"></div>
+                    <button onClick={() => setShowAi(true)} className="p-2 text-slate-400 hover:text-blue-500 transition-colors"><Icon name="Sparkles" size={20} /></button>
+                  </div>
+                </div>
+
+                <div className="px-10 py-3 flex items-center flex-wrap gap-1 border-b border-slate-50 bg-slate-50/10">
+                  <div className="flex gap-1 mr-4 border-r border-slate-200 pr-4">
+                    <button onClick={() => exec('undo')} className="p-2 hover:bg-white rounded-lg text-slate-500" title="撤销"><Icon name="Undo" size={15} /></button>
+                    <button onClick={() => exec('redo')} className="p-2 hover:bg-white rounded-lg text-slate-500" title="重做"><Icon name="Redo" size={15} /></button>
+                  </div>
+                  <div className="flex gap-1 mr-4 border-r border-slate-200 pr-4">
+                    <button onClick={() => exec('bold')} className="p-2 hover:bg-white rounded-lg text-slate-500" title="加粗"><Icon name="Bold" size={16} /></button>
+                    <button onClick={() => exec('italic')} className="p-2 hover:bg-white rounded-lg text-slate-500" title="斜体"><Icon name="Italic" size={16} /></button>
+                    <button onClick={() => exec('underline')} className="p-2 hover:bg-white rounded-lg text-slate-500" title="下划线"><Icon name="Underline" size={16} /></button>
+                    <button onClick={() => exec('strikeThrough')} className="p-2 hover:bg-white rounded-lg text-slate-500" title="删除线"><Icon name="Strikethrough" size={16} /></button>
+                  </div>
+                  <div className="flex gap-1 mr-4 border-r border-slate-200 pr-4">
+                    <button onClick={() => exec('justifyLeft')} className="p-2 hover:bg-white rounded-lg text-slate-500" title="左对齐"><Icon name="AlignLeft" size={16} /></button>
+                    <button onClick={() => exec('justifyCenter')} className="p-2 hover:bg-white rounded-lg text-slate-500" title="居中"><Icon name="AlignCenter" size={16} /></button>
+                    <button onClick={() => exec('justifyRight')} className="p-2 hover:bg-white rounded-lg text-slate-500" title="右对齐"><Icon name="AlignRight" size={16} /></button>
+                  </div>
+                  <div className="flex gap-1 mr-4 border-r border-slate-200 pr-4">
+                    <button onClick={() => exec('insertUnorderedList')} className="p-2 hover:bg-white rounded-lg text-slate-500" title="无序列表"><Icon name="List" size={16} /></button>
+                    <button onClick={() => exec('insertOrderedList')} className="p-2 hover:bg-white rounded-lg text-slate-500" title="有序列表"><Icon name="ListOrdered" size={16} /></button>
+                    <button onClick={() => exec('formatBlock', 'blockquote')} className="p-2 hover:bg-white rounded-lg text-slate-500" title="引用"><Icon name="Quote" size={16} /></button>
+                  </div>
+                  <div className="flex gap-1">
+                    <button onClick={insertTable} className="p-2 hover:bg-white rounded-lg text-slate-500" title="表格"><Icon name="Table" size={16} /></button>
+                    <button onClick={() => imageInputRef.current.click()} className="p-2 hover:bg-blue-50 rounded-lg text-blue-600 transition-all" title="插图"><Icon name="Image" size={16} /></button>
+                    <button onClick={() => fileInputRef.current.click()} className="p-2 hover:bg-indigo-50 rounded-lg text-indigo-600 transition-all" title="插入文档"><Icon name="Paperclip" size={16} /></button>
+                    <button onClick={insertLink} className="p-2 hover:bg-white rounded-lg text-slate-500" title="链接"><Icon name="Link" size={16} /></button>
+                  </div>
+                  <input type="file" id="image-upload" className="hidden" multiple accept="image/*" onChange={handleImageUpload} ref={imageInputRef} />
+                  <input type="file" id="file-upload" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx,.zip" onChange={handleFileUpload} ref={fileInputRef} />
+                </div>
+
+                <div className="flex-grow overflow-y-auto custom-scrollbar px-24 py-16 max-w-5xl mx-auto w-full">
+                  <input 
+                    id="note-title-input"
+                    type="text"
+                    className="text-5xl font-black text-slate-900 bg-transparent mb-12 w-full border-0 focus:ring-0 placeholder-slate-200 tracking-tighter"
+                    placeholder="无标题文档"
+                    onInput={() => setSaveStatus('modified')}
+                  />
+                  <div 
+                    ref={editorRef}
+                    contentEditable
+                    onInput={() => setSaveStatus('modified')}
+                    className="prose-editor w-full min-h-[600px] outline-none text-slate-700 leading-relaxed text-lg font-light pb-40"
+                  ></div>
+                </div>
+
+                {/* Nik 侧边栏 */}
+                {showAi && (
+                  <div className="absolute right-0 top-16 bottom-10 w-[420px] bg-white border-l border-slate-100 shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
+                    <div className="p-6 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg">
+                          <Icon name="Cpu" size={18} />
+                        </div>
+                        <div>
+                          <div className="text-sm font-black">Nik</div>
+                          <div className="text-[10px] text-blue-600 font-bold uppercase tracking-widest">Bridged Core</div>
+                        </div>
+                      </div>
+                      <button onClick={() => setShowAi(false)} className="text-slate-300 hover:text-slate-900"><Icon name="X" size={20} /></button>
+                    </div>
+
+                    <div ref={aiScrollRef} className="flex-grow overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50/30">
+                      {aiMessages.map((msg, i) => (
+                        <div key={i} className={`flex flex-col ${msg.role === 'user' ? 'items-end' : 'items-start'}`}>
+                          {msg.thought && (
+                            <div className="mb-2 w-full max-w-[90%]">
+                              <div className="flex items-center gap-2 text-[10px] text-slate-400 mb-1 px-1">
+                                <Icon name="Terminal" size={10} /> 思考中...
+                              </div>
+                              <div className="bg-slate-100/80 p-3 rounded-xl text-xs text-slate-500 font-mono italic">
+                                {msg.thought}
+                              </div>
+                            </div>
+                          )}
+                          <div className={`max-w-[85%] p-4 rounded-2xl text-sm leading-relaxed ${
+                            msg.role === 'user' 
+                            ? 'bg-blue-600 text-white shadow-lg' 
+                            : 'bg-white border border-slate-100 text-slate-700 shadow-sm'
+                          }`}>
+                            {msg.text}
+                          </div>
+                        </div>
+                      ))}
+                      {isAiLoading && (
+                        <div className="flex flex-col items-start px-2">
+                          <div className="flex gap-1 mb-2">
+                            <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                            <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                            <div className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="p-6 bg-white border-t border-slate-100">
+                      <div className="flex gap-2 mb-4">
+                        <button onClick={() => handleAiAction('improve')} className="flex-grow py-2.5 bg-slate-900 text-white text-[10px] font-bold rounded-xl hover:bg-slate-800 transition-all flex items-center justify-center gap-2">
+                          <Icon name="Sparkles" size={12} /> 润色当前文章
+                        </button>
+                        <button onClick={() => handleAiAction('search')} className="flex-grow py-2.5 bg-white border border-slate-200 text-slate-900 text-[10px] font-bold rounded-xl hover:bg-slate-50 transition-all flex items-center justify-center gap-2">
+                          <Icon name="Search" size={12} /> 查找桌面系统内容
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <textarea 
+                          value={aiInput}
+                          onChange={(e) => setAiInput(e.target.value)}
+                          placeholder="询问 Nik..."
+                          className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 text-xs focus:ring-1 focus:ring-blue-400 outline-none transition-all resize-none h-24"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                              e.preventDefault();
+                              handleAiAction('chat');
+                            }
+                          }}
+                        />
+                        <button onClick={() => handleAiAction('chat')} className="absolute right-3 bottom-3 p-2 bg-blue-600 text-white rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all">
+                          <Icon name="Send" size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div className="h-10 px-8 flex justify-between items-center border-t border-slate-50 text-[10px] font-bold text-slate-300 uppercase tracking-[0.2em]">
+                  <div>NikNote Matrix Edition v2.5</div>
+                  <div className="flex gap-6">
+                    <span>SYNC: ACTIVE</span>
+                    <span>ENCRYPTION: AES-256</span>
+                  </div>
+                </div>
+              </div>
+
+              <style>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+                .prose-editor:empty:before { content: "在这里开始你的深度思考..."; color: #cbd5e1; pointer-events: none; }
+                .nik-table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 2rem 0; border: 1px solid #f1f5f9; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.02); }
+                .nik-table th { background: #f8fafc; color: #64748b; font-weight: 800; font-size: 11px; text-transform: uppercase; padding: 14px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+                .nik-table td { padding: 14px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #475569; background: white; }
+                .file-attach-card { padding: 20px; background: #fff; border: 1px solid #e2e8f0; border-radius: 20px; margin: 1.5rem 0; transition: all 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.02); }
+                .file-attach-card:hover { border-color: #3b82f6; transform: translateY(-2px); box-shadow: 0 12px 25px rgba(59,130,246,0.08); }
+                blockquote { border-left: 4px solid #3b82f6; padding-left: 1.5rem; margin: 1.5rem 0; color: #64748b; font-style: italic; background: #f8fafc; padding: 1rem 1.5rem; border-radius: 0 16px 16px 0; }
+                a { color: #3b82f6; text-decoration: underline; text-underline-offset: 4px; }
+                @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+                .slide-in-from-right { animation: slideIn 0.3s ease-out; }
+              `}</style>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
