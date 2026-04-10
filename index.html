@@ -3,455 +3,513 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>NikWe - 智者，人生</title>
+    <title>NikWe|智者，人生</title>
+    <!-- 环境加载 -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;600;800;900&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;900&family=Noto+Sans+SC:wght@100;400;900&family=Noto+Serif+SC:wght@400;900&family=Zhi+Mang+Xing&family=Ma+Shan+Zheng&family=Long+Cang&family=JetBrains+Mono&display=swap');
         
-        :root {
-            --accent: #2563eb;
-            --glass: rgba(255, 255, 255, 0.08);
-            --glass-border: rgba(255, 255, 255, 0.12);
-        }
-
-        body, html {
-            margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden;
-            background: #000; font-family: 'Inter', 'PingFang SC', sans-serif; color: #fff;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        /* 动态背景层 */
-        #wallpaper-layer {
-            position: fixed; inset: 0; background-size: cover; background-position: center;
-            transition: background-image 1.2s cubic-bezier(0.4, 0, 0.2, 1); z-index: 0;
-            background-color: #111;
-        }
-        #wallpaper-layer::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0.35); }
-
-        /* 品牌字样 */
-        #branding-layer {
-            position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
-            z-index: 1; pointer-events: none; user-select: none;
-        }
-        .brand-logo-text { font-size: 15vw; font-weight: 900; color: rgba(255,255,255,0.03); letter-spacing: -0.06em; line-height: 1; }
-
-        /* 状态栏适配 */
-        #top-bar { position: fixed; top: 0; width: 100%; padding: calc(env(safe-area-inset-top) + 15px) 25px 0; md:padding: 30px 50px; z-index: 100; pointer-events: none; }
-        .top-bar-content { display: flex; justify-content: space-between; align-items: flex-start; pointer-events: auto; }
-
-        /* 中心时间 (精致缩小版) */
-        #center-hub {
-            position: fixed; top: 32%; left: 50%; transform: translate(-50%, -50%);
-            text-align: center; z-index: 10; width: 90%; transition: opacity 0.5s ease;
-        }
-        .clock-display { font-size: 14vw; md:font-size: 7.5rem; font-weight: 100; line-height: 1; letter-spacing: -0.05em; }
-        .date-display { margin-top: 5px; font-size: 12px; md:font-size: 14px; color: rgba(255,255,255,0.5); letter-spacing: 0.3em; text-transform: uppercase; }
-
-        /* 底部枢纽适配 */
-        #bottom-hub {
-            position: fixed; bottom: calc(env(safe-area-inset-bottom) + 15px); left: 50%; transform: translateX(-50%);
-            display: flex; flex-direction: column; align-items: center; gap: 12px;
-            z-index: 2000; transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1); width: 100%; max-width: 100vw; padding: 0 15px;
-        }
-        #bottom-hub.hidden { transform: translate(-50%, 300px); opacity: 0; pointer-events: none; }
-
-        .search-pill-box {
-            width: 100%; max-width: 400px; background: rgba(255,255,255,0.1); backdrop-filter: blur(40px);
-            border-radius: 20px; border: 1px solid var(--glass-border); padding: 2px;
-        }
-        .search-input { background: transparent; border: none; outline: none; width: 100%; color: white; text-align: center; font-size: 0.85rem; font-weight: 300; padding: 10px 15px; }
-
-        #search-results {
-            position: absolute; bottom: calc(100% + 10px); left: 0; width: 100%;
-            background: rgba(255,255,255,0.96); backdrop-filter: blur(50px);
-            border-radius: 20px; display: none; flex-direction: column;
-            overflow-y: auto; box-shadow: 0 20px 80px rgba(0,0,0,0.4); color: #1e293b;
-            max-height: 350px; z-index: 2500; border: 1px solid #fff;
-        }
-        .result-item { padding: 10px 20px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid #f1f5f9; }
-        .result-item:hover { background: #f1f5f9; }
-
-        /* Dock 栏适配 */
-        #dock-bar {
-            background: rgba(255,255,255,0.1); padding: 8px 10px; border-radius: 24px;
-            display: flex; gap: 6px; border: 1px solid var(--glass-border);
-            backdrop-filter: blur(40px); max-width: 100%; overflow-x: auto; scrollbar-width: none;
-        }
-        .dock-item {
-            flex-shrink: 0; width: 48px; height: 48px; md:width: 50px; md:height: 50px;
-            border-radius: 14px; display: flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: 0.3s; color: #fff;
-        }
-        .dock-item:hover { background: rgba(255,255,255,0.2); transform: translateY(-5px); }
-
-        /* AI 对话调度中心 (响应式修复：手机端弹出，电脑端侧滑) */
-        #ai-chat-panel {
-            position: fixed; 
-            inset: 10px; top: auto; height: 80vh; 
-            md:inset: auto; md:top: 20px; md:bottom: 20px; md:right: 20px; md:width: 380px; md:height: auto;
-            border-radius: 35px; background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(60px);
-            border: 1px solid white; z-index: 4000; transform: translateY(120%);
-            md:transform: translateX(120%);
-            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex; flex-direction: column; overflow: hidden; color: #1e293b;
-            box-shadow: 0 -10px 50px rgba(0,0,0,0.1);
-            pointer-events: none;
-        }
-        #ai-chat-panel.active { transform: translateY(0); md:transform: translateX(0); pointer-events: auto; }
-        .ai-header { padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
-        .ai-msg-list { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 12px; }
-        .ai-bubble { padding: 10px 16px; border-radius: 18px; max-width: 90%; font-size: 13px; line-height: 1.5; word-wrap: break-word; }
-        .ai-bubble.user { align-self: flex-end; background: #0f172a; color: white; border-bottom-right-radius: 2px; }
-        .ai-bubble.bot { align-self: flex-start; background: #f1f5f9; color: #334155; border-bottom-left-radius: 2px; }
-
-        /* 应用窗口适配 */
-        #app-window {
-            position: fixed; inset: 0; margin: auto; width: 100%; height: 100%; 
-            md:width: 94vw; md:height: 88vh; md:border-radius: 40px;
-            background: #fff; z-index: 1500; opacity: 0; transform: scale(0.96) translateY(50px); 
-            pointer-events: none; transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1); 
-            display: flex; flex-direction: column; overflow: hidden;
-        }
-        #app-window.active { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
-
-        /* 设置面板 UI 加固 */
-        #settings-modal {
-            position: fixed; inset: 0; z-index: 5000; display: none; align-items: center; justify-content: center;
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(30px); padding: 15px;
-            pointer-events: none;
-        }
-        #settings-modal.active { display: flex; pointer-events: auto; }
-        .settings-card { width: 100%; max-width: 580px; max-height: 85vh; background: #fff; border-radius: 35px; padding: 25px md:40px; overflow-y: auto; position: relative; color: #1e293b; }
+        body, html { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #000; font-family: 'Inter', 'Noto Sans SC', sans-serif; color: #1e293b; -webkit-tap-highlight-color: transparent; }
         
-        .win-close-btn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; color: #94a3b8; transition: 0.2s; background: #f8fafc; }
-        .win-close-btn:hover { background: #fee2e2; color: #ef4444; }
-
-        .config-block { margin-bottom: 15px; padding: 20px; background: #f8fafc; border-radius: 25px; border: 1.5px solid #edf2f7; }
-        .block-tag { font-size: 10px; font-weight: 900; color: var(--accent); text-transform: uppercase; margin-bottom: 15px; display: flex; align-items: center; gap: 6px; }
-        
-        .form-grid { display: grid; grid-template-columns: 1fr; md:grid-template-columns: 1fr 1fr; gap: 12px; }
-        .input-item { display: flex; flex-direction: column; gap: 5px; margin-bottom: 8px; }
-        label { font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase; margin-left: 2px; }
-        
-        input { width: 100%; padding: 10px 16px; border-radius: 12px; border: 1.5px solid #eef2f6; outline: none; font-size: 14px; background: #fff; box-sizing: border-box; }
-        .btn-black { background: #0f172a; color: #fff; padding: 14px 24px; border-radius: 16px; font-weight: 800; font-size: 14px; cursor: pointer; width: 100%; border: none; }
-
-        /* AI 悬浮球 (物理响应式) */
-        #ai-core {
-            position: fixed; right: 20px; bottom: 85px; md:right: 40px; md:bottom: 40px;
-            width: 52px; height: 52px; border-radius: 50%; background: #000; border: 1.5px solid rgba(255,255,255,0.3);
-            display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 2500;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        #wallpaper-layer { 
+            position: fixed; inset: 0; background-size: cover; background-position: center; z-index: 0; 
+            transition: background-image 1s ease-in-out;
         }
-        .ai-pulse { width: 8px; height: 8px; background: #fff; border-radius: 50%; animation: core-pulse 2s infinite; }
-        @keyframes core-pulse { 0% { transform: scale(1); opacity: 0.4; } 70% { transform: scale(1.3); opacity: 1; box-shadow: 0 0 0 15px rgba(255,255,255,0); } 100% { transform: scale(1); opacity: 0.4; } }
+        #wallpaper-layer::after { content: ""; position: absolute; inset: 0; background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); }
 
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .brand-logo-text { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; z-index: 1; pointer-events: none; font-size: 16vw; font-weight: 900; color: rgba(255,255,255,0.06); text-transform: uppercase; letter-spacing: -0.05em; }
+
+        /* 编辑器 28项 物理锁死渲染 */
+        .editor-view:empty:before { content: "在此记录思考，输入 @AI 召唤助手..."; color: #94a3b8; pointer-events: none; }
+        .editor-view h1 { font-size: 2.2em; font-weight: 900; margin: 0.8em 0 0.4em; color: #000; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+        .editor-view table { border-collapse: collapse; width: 100%; margin: 1em 0; border: 1.5px solid #e2e8f0; }
+        .editor-view td { border: 1px solid #e2e8f0; padding: 10px; min-width: 50px; }
+        
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.1); border-radius: 10px; }
+
+        .tool-btn { 
+            height: 32px; min-width: 32px; display: flex; align-items: center; justify-content: center; 
+            border-radius: 6px; font-size: 10px; font-weight: 900; color: #000; transition: 0.2s;
+            cursor: pointer; background: rgba(255,255,255,0.98); border: 1px solid #e2e8f0;
+        }
+        .tool-btn:hover { background: #000 !important; color: #fff !important; transform: translateY(-1px); }
+
+        .float-dock-btn {
+            width: 56px; height: 56px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            color: rgba(0,0,0,0.75); border-radius: 20px; position: relative;
+        }
+        .float-dock-btn:hover { transform: translateY(-10px); background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(12px); color: #000; }
+
+        .glass-panel { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(50px) saturate(180%); border: 1px solid rgba(255, 255, 255, 0.5); box-shadow: 0 40px 80px rgba(0,0,0,0.12); }
+        .tile-widget { flex: 1; min-width: 200px; max-width: 330px; height: 160px; transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; border: 1px solid rgba(255, 255, 255, 0.5); display: flex; flex-direction: column; padding: 1.5rem; border-radius: 32px; background: rgba(255, 255, 255, 0.3); backdrop-filter: blur(30px); }
+        .tile-widget:hover { transform: translateY(-5px); background: rgba(255, 255, 255, 0.5); }
+
+        .glass-input { background: rgba(0, 0, 0, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(0, 0, 0, 0.08); @apply w-full p-4 rounded-xl outline-none focus:bg-white/40 transition-all text-xs font-black text-slate-800 shadow-inner; }
+
+        .chat-bubble { @apply p-4 rounded-2xl mb-4 max-w-[90%] text-xs font-bold leading-relaxed; }
+        .chat-user { @apply bg-black text-white ml-auto rounded-tr-none shadow-lg; }
+        .chat-target { @apply bg-white border border-black/5 text-slate-800 mr-auto rounded-tl-none shadow-sm; }
+
+        .file-card { @apply mt-3 p-3 bg-white/50 border border-black/5 rounded-xl flex items-center gap-3 text-[10px] font-black uppercase tracking-tighter hover:bg-white transition-all cursor-pointer shadow-sm; }
+        .badge { @apply absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center border-2 border-white; }
+
+        .plugin-frame { width: 100%; height: 100%; border: none; border-radius: 24px; background: #fff; }
+
+        @media print { .no-print { display: none !important; } body { background: white !important; } .print-area { position: static !important; width: 100% !important; overflow: visible !important; } }
     </style>
 </head>
 <body>
+    <div id="root"></div>
 
-    <div id="wallpaper-layer"></div>
-    <div id="branding-layer"><div class="brand-logo-text">NikWe</div></div>
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
 
-    <header id="top-bar">
-        <div class="top-bar-content">
-            <div class="flex flex-col gap-1">
-                <div class="flex items-center gap-2 text-white font-bold">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                    <span id="loc-display" class="text-[13px] uppercase">定位探测...</span>
-                </div>
-                <div id="weather-display" class="text-[9px] text-white/50 font-black uppercase tracking-widest">MATRIX SYNC</div>
-            </div>
-            <div class="slogan-box text-right hidden sm:block">
-                <div class="slogan-cn text-base font-bold">智者，人生</div>
-                <div class="slogan-en text-[6px] text-white/30 tracking-[0.4em]">MATRIX HUB</div>
-            </div>
-        </div>
-    </header>
-
-    <div id="center-hub">
-        <div class="clock-display" id="clock">00:00</div>
-        <div class="date-display text-[12px] md:text-[14px]" id="date-text">...</div>
-    </div>
-
-    <!-- AI 智脑悬浮入口 -->
-    <div id="ai-core" onclick="toggleAiChat()"><div class="ai-pulse"></div></div>
-
-    <!-- AI 调度面板 -->
-    <div id="ai-chat-panel">
-        <div class="ai-header">
-            <span class="text-[9px] font-black uppercase tracking-[0.4em] text-slate-400">Nik Scheduler</span>
-            <div onclick="toggleAiChat()" class="win-close-btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
-        </div>
-        <div id="ai-messages" class="ai-msg-list custom-scrollbar"></div>
-        <div class="p-4 border-t flex gap-3 bg-white pb-[calc(1rem+env(safe-area-inset-bottom))]">
-            <input type="text" id="ai-user-input" class="flex-grow p-3 bg-slate-50 border-0 outline-none rounded-xl text-xs" placeholder="全域调度或联网对话..." onkeydown="if(event.key==='Enter') matrixInvoke(this.value)">
-            <button onclick="matrixInvoke(document.getElementById('ai-user-input').value)" class="p-3 bg-blue-600 text-white rounded-xl active:scale-95 transition-transform"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg></button>
-        </div>
-    </div>
-
-    <!-- 底部功能枢纽 -->
-    <div id="bottom-hub">
-        <div class="search-pill-box">
-            <input type="text" id="quick-entry" class="search-input" placeholder="全域搜索本地或 Bing..." spellcheck="false" oninput="globalSearch(this.value)" onkeydown="if(event.key==='Enter') handleGlobalSearch(this.value)">
-            <div id="search-results" class="custom-scrollbar"></div>
-        </div>
-        <nav id="dock-bar" class="flex gap-2"></nav>
-    </div>
-
-    <!-- 矩阵设置面板 -->
-    <div id="settings-modal">
-        <div class="settings-card custom-scrollbar">
-            <div onclick="toggleSettings()" class="win-close-btn absolute top-5 right-5"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
-            <h2 class="text-xl font-black italic text-slate-800 mb-6 text-center tracking-tighter"> 核心配置中心</h2>
-
-            <div class="config-block">
-                <div class="block-tag">视觉环境</div>
-                <div class="flex gap-3 mb-4 overflow-x-auto pb-1" id="wallpaper-grid"></div>
-                <input type="text" id="custom-bg-url" placeholder="自定义背景直链 (HTTPS)">
-            </div>
-
-            <div class="config-block">
-                <div class="block-tag" style="color:#2563eb">智脑协议 (联网 API 支持)</div>
-                <div class="input-item mb-2"><label>API Key</label><input type="password" id="api-key" placeholder="在此填入 sk-..."></div>
-                <div class="form-grid">
-                    <div class="input-item"><label>BASE URL</label><input type="text" id="base-url" value="https://api.deepseek.com/chat/completions"></div>
-                    <div class="input-item"><label>MODEL</label><input type="text" id="model-name" value="deepseek-chat"></div>
-                </div>
-            </div>
-
-            <div class="config-block">
-                <div class="block-tag" style="color:#10b981">矩阵应用</div>
-                <div id="app-manager-list" class="mb-4 space-y-2"></div>
-                <div class="bg-white p-5 rounded-[20px] border border-slate-200">
-                    <div class="form-grid !mb-3">
-                        <div class="input-item"><label>显示名称</label><input type="text" id="new-app-name" placeholder="笔记本"></div>
-                        <div class="input-item"><label>文件名</label><input type="text" id="new-app-url" placeholder="niknote .html"></div>
-                    </div>
-                    <div class="input-item mb-4"><label>SVG PATH</label><input type="text" id="new-app-icon" placeholder="M12 3..."></div>
-                    <button onclick="addApp()" class="p-3 bg-emerald-600 text-white rounded-xl font-bold w-full text-xs">注入矩阵单元</button>
-                </div>
-            </div>
-
-            <button onclick="saveAllSettings()" class="btn-black bg-blue-600 shadow-xl py-4 mt-2">保存并重启系统</button>
-        </div>
-    </div>
-
-    <!-- 系统应用窗体 -->
-    <div id="app-window">
-        <div class="win-bar">
-            <span id="app-title" class="text-[10px] font-black uppercase tracking-[0.4em] text-slate-400">UNIT</span>
-            <div onclick="closeApp()" class="win-close-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
-        </div>
-        <div class="flex-grow bg-white">
-            <iframe id="app-iframe" src="about:blank" class="w-full h-full border-0"></iframe>
-        </div>
-    </div>
-
-    <script>
-        const DEFAULTS = {
-            apiKey: '', baseUrl: 'https://api.deepseek.com/chat/completions', modelName: 'deepseek-chat', currentWallpaper: 0,
-            wallpapers: [
-                'https://images.unsplash.com/photo-1477346611705-65d1883cee1e?auto=format&fit=crop&q=80&w=2000',
-                'https://images.unsplash.com/photo-1497215728101-856f4ea42174?auto=format&fit=crop&q=80&w=2000',
-                'https://images.unsplash.com/photo-1506318137071-a8e063b4b4bf?auto=format&fit=crop&q=80&w=2000',
-                'https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&q=80&w=2000',
-                'https://images.unsplash.com/photo-1541701494587-cb58502866ab?auto=format&fit=crop&q=80&w=2000'
-            ],
-            apps: [
-                { id: 'note', title: '笔记本', url: 'smart_note.html', icon: 'M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7 M18.375 2.625a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z' },
-                { id: 'im', title: '即时通讯', url: 'im.html', icon: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' },
-                { id: 'cal', title: '日程计划', url: 'calendar.html', icon: 'M3 4h18v18H3z M16 2v4 M8 2v4 M3 10h18' }
-            ]
+        const ICONS = {
+            plus: "M12 5v14M5 12h14", close: "M18 6L6 18M6 6l12 12", external: "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6 M15 3h6v6 M10 14L21 3",
+            send: "M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z", image: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M17 8l-5-5-5 5 M12 3v12",
+            print: "M6 9V2h12v7 M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2",
+            link: "M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71", table: "M3 3h18v18H3z M3 9h18 M3 15h18",
+            trash: "M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2",
+            undo: "M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6", redo: "M21 10H11a8 8 0 00-8 8v2M21 10l-6 6m6-6l-6-6",
+            book: "M4 19.5A2.5 2.5 0 0 1 6.5 17H20 M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15",
+            cycle: "M12 2v4 M12 18v4 M12 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0",
+            eye: "M12 12m-3 0a3 3 0 1 0 6 0a3 3 0 1 0 -6 0 M12 5c7 0 10 7 10 7s-3 7-10 7s-10-7-10-7s3-7 10-7z",
+            engine: "M12 15a3 3 0 100-6 3 3 0 000 6z",
+            pin: "M12 2v8m0 0l-4 4m4-4l4 4M5 20h14", upload: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4 M17 8l-5-5-5 5 M12 3v12",
+            bird: "M16 3H8L2 12l6 9h8l6-9-6-9z M2 12h20", mail: "M22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6z M20 6l-8 5-8-5",
+            clip: "M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19",
+            doc: "M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z M14 2v6h6",
+            lab: "M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z",
+            alignLeft: "M21 6H3M15 12H3M17 18H3", alignCenter: "M18 6H6M21 12H3M18 18H6", alignRight: "M21 6H3M21 12H9M21 18H7", alignFull: "M3 3h18v18H3V3zm2 2v14h14V5H5z",
+            indent: "M10 12h10M10 18h10M10 6h10M3 12l4 4M3 12l4-4", hr: "M5 12h14",
+            check: "M20 6L9 17l-5-5", clock: "M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z", calendar: "M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z",
+            list: "M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01", plugin: "M12 2v4 M12 18v4 M4.93 4.93l2.83 2.83 M16.24 16.24l2.83 2.83 M2 12h4 M18 12h4 M4.93 19.07l2.83-2.83 M16.24 7.76l2.83-2.83",
+            board: "M3 9h18M9 21V9M15 21V9M21 3H3a2 2 0 00-2 2v14a2 2 0 002 2h18a2 2 0 002-2V5a2 2 0 00-2-2z", scan: "M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9",
+            menu: "M3 12h18M3 6h18M3 18h18"
         };
 
-        let sysSettings = JSON.parse(localStorage.getItem('NikWe_Pro_V11')) || DEFAULTS;
+        const PRESET_WALLS = ["https://images.unsplash.com/photo-1506744038136-46273834b3fb", "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b", "https://images.unsplash.com/photo-1501785888041-af3ef285b470", "https://images.unsplash.com/photo-1470770841072-f978cf4d019e"];
+        const MOODS = [{ icon: "Focus", color: "#10b981" }, { icon: "Work", color: "#3b82f6" }, { icon: "Creative", color: "#a855f7" }, { icon: "Relax", color: "#f59e0b" }, { icon: "Alert", color: "#ef4444" }];
+        const FONTS = [{ label: "思源黑体", value: "Noto Sans SC" }, { label: "思源宋体", value: "Noto Serif SC" }, { label: "马善政楷", value: "Ma Shan Zheng" }, { label: "智莽行书", value: "Zhi Mang Xing" }, { label: "Inter Pro", value: "Inter" }, { label: "JetBrains Mono", value: "JetBrains Mono" }];
 
-        // 【核心 API 调用：支持联网搜索增强】
-        async function matrixCallAPI(prompt, systemPrompt = "你是 Nik 智脑。") {
-            if(!sysSettings.apiKey) throw new Error("API Key 未配置");
+        const Icon = ({ name, size = 14, className = "" }) => (
+            <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className={className} strokeLinecap="round" strokeLinejoin="round"><path d={ICONS[name] || ICONS.plus} /></svg>
+        );
+
+        const App = () => {
+            const [view, setView] = useState('desktop'); 
+            const [location, setLocation] = useState('定位中...');
+            const [weather, setWeather] = useState('...');
+            const [time, setTime] = useState('--:--');
+            const [date, setDate] = useState('...');
+            const [isAiOpen, setIsAiOpen] = useState(false);
+            const [isSearchOpen, setIsSearchOpen] = useState(false);
+            const [activePlugin, setActivePlugin] = useState(null);
+            const [showNoteSidebar, setShowNoteSidebar] = useState(true);
             
-            // 联网大模型 Payload 结构 (兼容 OpenAI/DeepSeek 联网模式)
-            const payload = {
-                model: sysSettings.modelName,
-                messages: [
-                    { role: "system", content: systemPrompt },
-                    { role: "user", content: prompt }
-                ],
-                // 联网搜索支持预留 (例如某些 API 需要 tools 或 search)
-                // 如果你的 API 服务端支持自带联网，以下标准请求通常会被后台自动触发。
-                // 某些 API 可能需要 stream: false。
-                stream: false
+            const [config, setConfig] = useState(() => JSON.parse(localStorage.getItem('NikWe_Master_Config_V200_Stable') || JSON.stringify({
+                username: "智者", wallpaper: PRESET_WALLS[0],
+                aiBaseUrl: "https://api.deepseek.com/v1/chat/completions", aiKey: "", aiModel: "deepseek-chat",
+                localBaseUrl: "http://localhost:11434/v1/chat/completions", localModel: "llama3",
+                plugins: [{ name: "思维导图", url: "https://boardmix.cn/" }, { name: "协作白板", url: "https://www.excalidraw.com/" }], apps: []
+            })));
+
+            const [notes, setNotes] = useState(() => JSON.parse(localStorage.getItem('NikData_Notes_V200_Stable') || '[{"id":1,"title":"智者指南","content":"","pinned":true}]'));
+            const [activeNoteId, setActiveNoteId] = useState(notes[0]?.id || 1);
+            const [schedules, setSchedules] = useState(() => JSON.parse(localStorage.getItem('NikData_Schedules_V200_Stable') || '[]'));
+            const [stickies, setStickies] = useState(() => JSON.parse(localStorage.getItem('NikData_Stickies_V200_Stable') || '[{"id":1,"text":"记录瞬间灵感...","color":"#fef3c7","mood":"Focus","pinned":true,"linkedTaskId":null}]'));
+            
+            const [commMode, setCommMode] = useState('chat'); 
+            const [plannerTab, setPlannerTab] = useState('schedule'); 
+            const [activeContactId, setActiveContactId] = useState(1);
+            
+            const [aiHistory, setAiHistory] = useState([{ role: 'target', text: '我是 NikWe Copilot。我可以访问您的笔记本、日程和便签。我可以帮您填写表格、安排计划。只需下达指令。', time: '--:--' }]);
+            const [isAiScanning, setIsAiScanning] = useState(false);
+
+            const emails = useMemo(() => [
+                { id: 1, from: "系统管家", subject: "系统物理状态就绪", content: "智者，核心工具栏 28 项已锁死，Slogan 还原完毕。", time: "NOW" },
+                { id: 2, from: "实验室", subject: "外联接口激活", content: "您可以注册外部 protocol:// 调用本地软件。", time: "Yesterday" }
+            ], []);
+
+            const [contacts, setContacts] = useState(() => JSON.parse(localStorage.getItem('NikData_Contacts_V200_Stable') || JSON.stringify([
+                { id: 1, name: "项目办-老张", avatar: "Z", msgs: [{id:1, role:'target', text:'物理锁死协议已同步。', time:'10:30'}], unread: 1 },
+                { id: 2, name: "设计协作组", avatar: "D", msgs: [], unread: 0 }
+            ])));
+
+            const editorRef = useRef(null);
+            const saveConfig = (next) => { setConfig(next); localStorage.setItem('NikWe_Master_Config_V200_Stable', JSON.stringify(next)); };
+            const saveNotes = (n) => { setNotes(n); localStorage.setItem('NikData_Notes_V200_Stable', JSON.stringify(n)); };
+            const saveSchedules = (s) => { setSchedules(s); localStorage.setItem('NikData_Schedules_V200_Stable', JSON.stringify(s)); };
+            const saveStickies = (st) => { setStickies(st); localStorage.setItem('NikData_Stickies_V200_Stable', JSON.stringify(st)); };
+
+            const displayTasks = useMemo(() => schedules.filter(s => !s.done).slice(0,3), [schedules]);
+            const displayStickies = useMemo(() => stickies.filter(s => s.pinned).slice(0,3), [stickies]);
+            const displayNotes = useMemo(() => notes.filter(n => n.pinned).slice(0,3), [notes]);
+            const totalUnread = useMemo(() => contacts.reduce((a,b)=>a+b.unread, 0), [contacts]);
+
+            // 物理补齐：真实地点与天气获取
+            useEffect(() => {
+                const fetchEnv = async () => {
+                    try {
+                        const locRes = await fetch('https://ipapi.co/json/');
+                        const locData = await locRes.json();
+                        if(locData.city) { 
+                            setLocation(locData.city.toUpperCase()); 
+                            const wRes = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${locData.latitude}&longitude=${locData.longitude}&current_weather=true`); 
+                            const wData = await wRes.json(); 
+                            setWeather(`${Math.round(wData.current_weather.temperature)}°C`); 
+                        }
+                    } catch (e) { setLocation('NIKWE HUB'); setWeather('...°C'); }
+                };
+                fetchEnv();
+                const timer = setInterval(() => {
+                    const now = new Date();
+                    setTime(now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false }));
+                    setDate(now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' }) + ' ' + now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase());
+                }, 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            const exec = (e, cmd, val = null) => { e.preventDefault(); document.execCommand(cmd, false, val); };
+
+            const handleEditorInput = () => {
+                if (!editorRef.current) return;
+                const html = editorRef.current.innerHTML;
+                if (html.includes('@AI')) { setIsAiOpen(true); editorRef.current.innerHTML = html.replace('@AI', '<span style="color:#2563eb; font-weight:900;">@AI</span>'); }
+                saveNotes(notes.map(n => n.id === activeNoteId ? {...n, content:editorRef.current.innerHTML} : n));
             };
 
-            // 如果使用特定的 Perplexity 或 OpenAI 搜索模型，通常不需要额外 tools
-            // 但如果使用的是需要显示调用的工具，此处可以注入 tools: [...]
+            const handleSendMsg = () => {
+                const input = document.getElementById('human-msg-input');
+                if(!input || !input.value.trim()) return;
+                const newMsg = { id: Date.now(), role: 'user', text: input.value, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) };
+                const next = contacts.map(c => c.id === activeContactId ? {...c, msgs: [...c.msgs, newMsg]} : c);
+                setContacts(next); localStorage.setItem('NikData_Contacts_V200_Stable', JSON.stringify(next));
+                input.value = '';
+            };
 
-            const response = await fetch(sysSettings.baseUrl, {
-                method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json', 
-                    'Authorization': `Bearer ${sysSettings.apiKey}` 
-                },
-                body: JSON.stringify(payload)
-            });
+            const handleWallUpload = (e) => {
+                const file = e.target.files[0]; if(!file) return;
+                const r = new FileReader(); r.onload = (v) => saveConfig({...config, wallpaper: v.target.result}); r.readAsDataURL(file);
+            };
 
-            if (!response.ok) throw new Error(`API Error: ${response.status}`);
-            const data = await response.json();
-            return data.choices[0].message.content;
-        }
+            const handleAiAction = (action) => {
+                const { type, payload } = action;
+                if (type === 'CREATE_SCHEDULE') saveSchedules([{ id: Date.now(), text: payload.text, date: payload.date, time: payload.time, done: false, pinned: false }, ...schedules]);
+                else if (type === 'CREATE_NOTE') { const nid = Date.now(); saveNotes([{ id: nid, title: payload.title, content: payload.content, pinned: false }, ...notes]); setActiveNoteId(nid); setView('note'); }
+                else if (type === 'CREATE_STICKY') saveStickies([{ id: Date.now(), text: payload.text, color: payload.color || '#fef3c7', mood: 'Work', pinned: false }, ...stickies]);
+                else if (type === 'INSERT_EDITOR' && editorRef.current) { editorRef.current.focus(); document.execCommand('insertHTML', false, payload.html); handleEditorInput(); }
+                setIsAiOpen(false);
+            };
 
-        // 全域索引算法
-        function scanMatrix(val) {
-            let res = [];
-            sysSettings.apps.forEach(a => { if(a.title.includes(val)) res.push({ type: 'UNIT', title: a.title, url: a.url }); });
-            for (let i = 0; i < localStorage.length; i++) {
-                const k = localStorage.key(i);
-                if (k.startsWith('NikData_') || k.includes('Note_Data') || k.includes('Plan_Data')) {
-                    try {
-                        const data = JSON.parse(localStorage.getItem(k));
-                        if (Array.isArray(data)) {
-                            data.filter(item => JSON.stringify(item).includes(val)).forEach(m => {
-                                res.push({ type: 'DATA', title: m.title || m.text || '匹配项', url: k.includes('Note') ? 'niknote .html' : 'calendar.html' });
-                            });
-                        }
-                    } catch(e) {}
-                }
-            }
-            return res;
-        }
-
-        function globalSearch(val) {
-            const results = document.getElementById('search-results');
-            if(!val.trim()) { results.style.display = 'none'; return; }
-            const hits = scanMatrix(val);
-            if(hits.length === 0) { results.style.display = 'none'; return; }
-            results.innerHTML = hits.map(h => `<div class="result-item" onclick="openApp('${h.url}','${h.title}')"><span class="text-[9px] opacity-30 mr-2">${h.type}</span><div class="text-sm font-bold truncate">${h.title}</div></div>`).join('');
-            results.style.display = 'flex';
-        }
-
-        function handleGlobalSearch(val) {
-            const results = document.getElementById('search-results');
-            if(results.style.display === 'flex' && results.querySelector('.result-item')) {
-                results.querySelector('.result-item').click();
-            } else {
-                window.open('https://www.bing.com/search?q=' + encodeURIComponent(val), '_blank');
-            }
-            results.style.display = 'none'; document.getElementById('quick-entry').value = '';
-        }
-
-        // 【智脑全域调用逻辑】
-        async function matrixInvoke(val) {
-            if(!val.trim()) return;
-            const input = document.getElementById('ai-user-input'); input.value = '';
-            appendAiMsg(val, 'user');
-            
-            const hits = scanMatrix(val).filter(h => h.type === 'DATA');
-            if(hits.length > 0) {
-                appendAiMsg("我在本地矩阵找到了匹配内容，已为你提取：", "bot");
-                hits.slice(0, 2).forEach(h => {
-                    const card = document.createElement('div'); card.className = 'p-3 bg-white border border-slate-100 rounded-xl mt-2 cursor-pointer shadow-sm text-xs font-bold';
-                    card.innerText = `调用：${h.title}`; card.onclick = () => openApp(h.url, h.title);
-                    document.getElementById('ai-messages').appendChild(card);
-                });
-            } else {
+            const callAiApi = async (userInput) => {
+                if (!userInput.trim()) return;
+                setAiHistory(prev => [...prev, { role: 'user', text: userInput, time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}) }]);
+                const context = isAiScanning ? JSON.stringify({ notes, schedules, stickies }) : "No context";
+                
+                // 联网大模型 API 调用代码实现
                 try {
-                    const result = await matrixCallAPI(val);
-                    appendAiMsg(result, "bot");
-                } catch(e) {
-                    appendAiMsg("智脑联网请求失败，请检查 API 设置。", "bot");
-                }
-            }
-        }
+                    const response = await fetch(config.aiBaseUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.aiKey}` },
+                        body: JSON.stringify({ 
+                            model: config.aiModel, 
+                            messages: [
+                                { role: 'system', content: `You are NikWe Copilot. Use JSON ACTION for any writing tasks. Context: ${context}. Location: ${location}. Weather: ${weather}.` }, 
+                                ...aiHistory.map(h=>({role:h.role==='user'?'user':'assistant',content:h.text})), 
+                                { role: 'user', content: userInput }
+                            ] 
+                        })
+                    });
+                    const data = await response.json();
+                    const text = data.choices[0].message.content;
+                    const actionMatch = text.match(/ACTION:\s*({.*})/);
+                    let action = null; if (actionMatch) { try { action = JSON.parse(actionMatch[1]); } catch(e) {} }
+                    setAiHistory(prev => [...prev, { role: 'target', text: text.replace(/ACTION:\s*({.*})/, ''), time: new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}), action }]);
+                } catch (e) { setAiHistory(prev => [...prev, { role: 'target', text: '通信失败，请检查配置。', time: '--:--' }]); }
+            };
 
-        async function updateWeather() {
-            try {
-                const lR = await fetch('https://ipapi.co/json/'); const lD = await lR.json();
-                const city = lD.city || "兰州";
-                document.getElementById('loc-display').innerText = `${city} • 中国`;
-                if(lD.latitude) {
-                    const wR = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lD.latitude}&longitude=${lD.longitude}&current_weather=true`);
-                    const wD = await wR.json();
-                    const map = { 0: "晴朗", 1: "少云", 2: "多云", 3: "阴天", 45: "雾气", 61: "微雨" };
-                    document.getElementById('weather-display').innerText = `${map[wD.current_weather.weathercode] || "同步中"} ${Math.round(wD.current_weather.temperature)}°C SYNCED`;
-                }
-            } catch (e) { document.getElementById('loc-display').innerText = "离线环境"; }
-        }
+            return (
+                <div className="relative h-full w-full overflow-hidden select-none">
+                    <div id="wallpaper-layer" style={{backgroundImage: `url(${config.wallpaper})`}}></div>
+                    <div className="brand-logo-text">NikWe</div>
 
-        function toggleAiChat() { document.getElementById('ai-chat-panel').classList.toggle('active'); }
-        function appendAiMsg(t, type) { const list = document.getElementById('ai-messages'); const b = document.createElement('div'); b.className = `ai-bubble ${type}`; b.innerText = t; list.appendChild(b); list.scrollTop = list.scrollHeight; }
+                    {/* Slogan 物理还原 & 真实天气位置 */}
+                    <header className={`fixed top-0 w-full p-6 md:p-10 flex justify-between items-start z-[100] no-print ${view!=='desktop'?'pointer-events-none':''}`}>
+                        <div className="flex flex-col gap-1 pointer-events-auto bg-white/40 backdrop-blur-2xl px-5 py-2.5 rounded-3xl border border-white shadow-sm font-black text-black">
+                            <div className="flex items-center gap-2 text-xs md:text-sm"><div className="w-1.5 h-1.5 bg-black rounded-full animate-pulse"></div><span>{location}</span></div>
+                            <div className="text-[9px] opacity-30 tracking-widest uppercase font-black">{weather} | Realtime</div>
+                        </div>
+                        <div className="text-right pointer-events-auto bg-white/40 backdrop-blur-2xl px-6 py-2.5 rounded-3xl border border-white shadow-sm text-black">
+                            <div className="text-xs md:text-sm font-bold tracking-widest font-black">{config.username}，人生</div>
+                            <div className="text-[9px] opacity-40 uppercase italic tracking-widest font-black text-black">Nik Master Unit</div>
+                        </div>
+                    </header>
 
-        // 【矩阵桥接：响应子应用 AI 请求】
-        window.addEventListener('message', async (e) => {
-            if (e.data?.type === 'MATRIX_AI_REQUEST') {
-                const { requestId, prompt, systemPrompt } = e.data;
-                try {
-                    const result = await matrixCallAPI(prompt, systemPrompt);
-                    e.source.postMessage({ type: 'MATRIX_AI_RESPONSE', requestId, content: result }, e.origin);
-                } catch (err) {
-                    e.source.postMessage({ type: 'MATRIX_AI_RESPONSE', requestId, error: true, content: err.message }, e.origin);
-                }
-            }
-        });
+                    {/* 全域搜索遮罩 */}
+                    {isSearchOpen && (
+                        <div className="fixed inset-0 z-[12000] bg-white/95 flex flex-col items-center justify-start pt-40 animate-in fade-in duration-300">
+                            <button onClick={()=>setIsSearchOpen(false)} className="absolute top-10 right-10 w-12 h-12 rounded-full bg-black/5 flex items-center justify-center hover:bg-black/10"><Icon name="close" size={24}/></button>
+                            <div className="w-full max-w-2xl px-8"><input autoFocus className="w-full bg-transparent border-b-4 border-black/20 outline-none text-5xl font-black placeholder-black/10 pb-4 font-black" placeholder="搜索文档或协作指令..." /></div>
+                        </div>
+                    )}
 
-        const win = document.getElementById('app-window'); const iframe = document.getElementById('app-iframe');
-        function openApp(url, title) {
-            document.getElementById('app-title').innerText = title; iframe.src = url;
-            win.classList.add('active'); document.getElementById('bottom-hub').classList.add('hidden');
-            document.getElementById('center-hub').style.opacity = "0";
-            document.getElementById('search-results').style.display = 'none';
-        }
-        function closeApp() {
-            win.classList.remove('active'); iframe.src = "about:blank";
-            document.getElementById('bottom-hub').classList.remove('hidden'); document.getElementById('center-hub').style.opacity = "1";
-        }
-        function toggleSettings() { 
-            const m = document.getElementById('settings-modal'); m.classList.toggle('active');
-            if(m.classList.contains('active')) {
-                document.getElementById('api-key').value = sysSettings.apiKey || '';
-                document.getElementById('base-url').value = sysSettings.baseUrl;
-                document.getElementById('model-name').value = sysSettings.modelName;
-                renderAppManager();
-            }
-        }
-        function setWallpaper(idx, customUrl = null) {
-            const url = customUrl || sysSettings.wallpapers[idx]; sysSettings.currentWallpaper = idx;
-            document.getElementById('wallpaper-layer').style.backgroundImage = `url('${url}')`;
-            const container = document.getElementById('wallpaper-grid');
-            container.innerHTML = sysSettings.wallpapers.map((url, i) => `<div onclick="setWallpaper(${i})" class="w-12 h-12 rounded-lg cursor-pointer ${sysSettings.currentWallpaper === i ? 'border-2 border-blue-500' : ''}" style="background-image:url('${url}'); background-size:cover;"></div>`).join('');
-        }
-        function renderDock() {
-            const d = document.getElementById('dock-bar');
-            d.innerHTML = sysSettings.apps.map(a => `<div class="dock-item" onclick="openApp('${a.url}','${a.title}')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="${a.icon}"/></svg></div>`).join('') + 
-            `<div class="dock-item text-white/30" onclick="toggleSettings()"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1-2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>`;
-        }
-        function renderAppManager() {
-            const list = document.getElementById('app-manager-list');
-            list.innerHTML = sysSettings.apps.map((a, i) => `<div class="flex justify-between items-center p-3 bg-white rounded-xl border border-slate-100 shadow-sm"><span class="text-xs font-bold text-slate-700 uppercase tracking-tighter">${a.title}</span><button onclick="removeApp(${i})" class="text-rose-500 font-black uppercase text-[10px]">移除</button></div>`).join('');
-        }
-        function addApp() {
-            const n = document.getElementById('new-app-name').value; const u = document.getElementById('new-app-url').value;
-            const i = document.getElementById('new-app-icon').value || 'M4 4h16v16H4z';
-            if (!n || !u) return; sysSettings.apps.push({ id: Date.now().toString(), title: n, url: u, icon: i }); renderAppManager();
-        }
-        function removeApp(idx) { sysSettings.apps.splice(idx, 1); renderAppManager(); }
-        function saveAllSettings() {
-            sysSettings.apiKey = document.getElementById('api-key').value;
-            sysSettings.baseUrl = document.getElementById('base-url').value;
-            sysSettings.modelName = document.getElementById('model-name').value;
-            localStorage.setItem('NikWe_Pro_V11', JSON.stringify(sysSettings));
-            renderDock(); toggleSettings();
-        }
+                    {view === 'desktop' && (
+                        <div className="relative z-20 h-screen w-full flex flex-col items-center justify-between py-12 md:py-24">
+                            <div className="flex-1 flex flex-col items-center justify-center w-full">
+                                <div className="text-center mb-10 md:mb-12">
+                                    <div className="clock-display font-thin text-[22vw] md:text-[7.5rem] tracking-tighter leading-none text-black drop-shadow-sm">{time}</div>
+                                    <div className="date-display text-[10px] md:text-[13px] text-black/40 tracking-[0.4em] uppercase font-black mt-3">{date}</div>
+                                </div>
+                                <div className="w-full max-w-6xl px-6 md:px-8 flex flex-wrap justify-center gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-5 duration-700">
+                                    <div onClick={()=>setView('planner')} className="tile-widget"><div className="flex justify-between items-start mb-2"><span className="text-[9px] font-black uppercase opacity-20 tracking-widest font-black">Plans</span><Icon name="pin" size={10} className="opacity-10"/></div><div className="space-y-2 flex-1 overflow-hidden font-black text-black">{displayTasks.map(t => (<div key={t.id} className="truncate font-bold text-[11px] flex items-center gap-2"><div className="w-1 h-1 bg-black rounded-full shrink-0"></div>{t.text}</div>))}</div></div>
+                                    <div onClick={()=>setView('planner')} className="tile-widget"><div className="flex justify-between items-start mb-2"><span className="text-[9px] font-black uppercase opacity-20 tracking-widest font-black">Stickies</span><Icon name="pin" size={10} className="opacity-10"/></div><div className="space-y-2 flex-1 overflow-hidden font-black text-black/60 italic">{displayStickies.map(s => (<div key={s.id} className="truncate font-bold text-[10px] flex items-center gap-2"><div className="w-1.5 h-1.5 rounded-full shrink-0" style={{backgroundColor: MOODS.find(m=>m.icon===s.mood)?.color || '#000'}}></div>{s.text}</div>))}</div></div>
+                                    <div onClick={()=>setView('note')} className="tile-widget"><div className="flex justify-between items-start mb-2"><span className="text-[9px] font-black uppercase opacity-20 tracking-widest font-black">Docs</span><Icon name="pin" size={10} className="opacity-10"/></div><div className="space-y-2 flex-1 overflow-hidden text-[11px] font-black text-black">{displayNotes.map(n => (<div key={n.id} className="truncate font-black flex items-center gap-2"><Icon name="book" size={8} className="opacity-20"/>{n.title}</div>))}</div></div>
+                                </div>
+                            </div>
+                            <div className="w-full flex justify-center gap-4 md:gap-10 px-8 shrink-0 pb-12 no-print font-black">
+                                <div onClick={()=>setView('note')} className="float-dock-btn" title="笔记本"><Icon name="book" size={24} /></div>
+                                <div onClick={()=>setView('planner')} className="float-dock-btn" title="计划中心"><Icon name="cycle" size={24} /></div>
+                                <div onClick={()=>setView('comm')} className="float-dock-btn" title="协作通讯"><Icon name="bird" size={24} />{totalUnread > 0 && <span className="badge">{totalUnread}</span>}</div>
+                                <div onClick={()=>setView('lab')} className="float-dock-btn" title="实验室"><Icon name="lab" size={24} /></div>
+                                <div onClick={()=>setIsSearchOpen(true)} className="float-dock-btn" title="全域搜索"><Icon name="eye" size={24} /></div>
+                                <div onClick={()=>setView('settings')} className="float-dock-btn" title="设置中心"><Icon name="engine" size={24} /></div>
+                            </div>
+                        </div>
+                    )}
 
-        window.onload = () => {
-            setWallpaper(sysSettings.currentWallpaper); renderDock(); updateWeather();
-            setInterval(() => {
-                const now = new Date(); document.getElementById('clock').innerText = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', hour12: false });
-                document.getElementById('date-text').innerText = now.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' }) + ' ' + now.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-            }, 1000);
+                    {/* 笔记本 - 恢复侧栏切换逻辑 */}
+                    {view === 'note' && (
+                        <div className="fixed inset-0 md:m-auto glass-panel z-[1500] flex flex-col overflow-hidden md:w-[97vw] md:h-[95vh] md:rounded-[35px]">
+                            <header className="h-14 border-b border-black/5 flex items-center justify-between px-6 shrink-0 no-print font-black">
+                                <div className="flex items-center gap-4">
+                                    <button onClick={()=>setShowNoteSidebar(!showNoteSidebar)} className="w-8 h-8 rounded-full hover:bg-black/5 flex items-center justify-center transition-all"><Icon name="menu" size={16}/></button>
+                                    <div className="text-[11px] uppercase italic">Workstation / Documents</div>
+                                </div>
+                                <button onClick={()=>setView('desktop')} className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><Icon name="close" size={16}/></button>
+                            </header>
+                            <div className="flex flex-1 overflow-hidden">
+                                {showNoteSidebar && (
+                                    <aside className="w-64 border-r border-black/5 bg-white/10 flex flex-col p-4 shrink-0 overflow-y-auto animate-in slide-in-from-left duration-300">
+                                        <button onClick={()=>{const nid=Date.now(); saveNotes([{id:nid, title:'新文档', content:'', pinned:false}, ...notes]); setActiveNoteId(nid);}} className="w-full mb-6 p-3 bg-black text-white rounded-xl text-[10px] font-black uppercase shadow-lg font-black">New Entry</button>
+                                        <div className="space-y-2">{notes.map(n => (
+                                            <div key={n.id} onClick={()=>setActiveNoteId(n.id)} className={`p-3 rounded-xl cursor-pointer text-[12px] transition-all font-black ${activeNoteId===n.id ? 'bg-white shadow-sm border border-black/5 text-black' : 'text-black/30 hover:bg-white/40'}`}>
+                                                <div className="truncate">{n.title}</div>
+                                            </div>
+                                        ))}</div>
+                                    </aside>
+                                )}
+                                <main className="flex-1 flex flex-col overflow-hidden bg-white/40">
+                                    <div className="p-2 border-b border-black/5 flex gap-1.5 flex-wrap bg-white shrink-0 items-center justify-center shadow-sm min-h-[120px] overflow-y-auto z-[200]">
+                                        <select className="h-8 border-0 rounded-lg text-[10px] font-black px-2 bg-slate-50 outline-none" onChange={(e)=>exec(e, 'fontName', e.target.value)}>{FONTS.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}</select>
+                                        <button onMouseDown={(e)=>exec(e, 'bold')} className="tool-btn font-black">B</button>
+                                        <button onMouseDown={(e)=>exec(e, 'italic')} className="tool-btn italic">I</button>
+                                        <button onMouseDown={(e)=>exec(e, 'underline')} className="tool-btn underline">U</button>
+                                        <button onMouseDown={(e)=>exec(e, 'strikeThrough')} className="tool-btn line-through">ABC</button>
+                                        <button onMouseDown={(e)=>exec(e, 'formatBlock', 'H1')} className="tool-btn font-black">H1</button>
+                                        <button onMouseDown={(e)=>exec(e, 'formatBlock', 'H2')} className="tool-btn font-black">H2</button>
+                                        <button onMouseDown={(e)=>exec(e, 'subscript')} className="tool-btn text-[8px]">X₂</button>
+                                        <button onMouseDown={(e)=>exec(e, 'superscript')} className="tool-btn text-[8px]">X²</button>
+                                        <div className="flex gap-1 items-center bg-white px-2 rounded-lg border border-black/5 h-8"><input type="color" onInput={(e)=>exec(e, 'foreColor', e.target.value)} title="色" className="w-4 h-4 cursor-pointer" /><input type="color" onInput={(e)=>exec(e, 'hiliteColor', e.target.value)} title="底" className="w-4 h-4 cursor-pointer" /></div>
+                                        <button onMouseDown={(e)=>exec(e, 'justifyLeft')} className="tool-btn"><Icon name="alignLeft"/></button>
+                                        <button onMouseDown={(e)=>exec(e, 'justifyCenter')} className="tool-btn"><Icon name="alignCenter"/></button>
+                                        <button onMouseDown={(e)=>exec(e, 'justifyRight')} className="tool-btn"><Icon name="alignRight"/></button>
+                                        <button onMouseDown={(e)=>exec(e, 'justifyFull')} className="tool-btn"><Icon name="alignFull"/></button>
+                                        <button onMouseDown={(e)=>exec(e, 'insertTable')} className="tool-btn"><Icon name="table"/></button>
+                                        <button onMouseDown={(e)=>exec(e, 'indent')} className="tool-btn"><Icon name="indent"/></button>
+                                        <button onMouseDown={(e)=>exec(e, 'outdent')} className="tool-btn scale-x-[-1]"><Icon name="indent"/></button>
+                                        <button onMouseDown={(e)=>exec(e, 'insertUnorderedList')} className="tool-btn"><Icon name="list"/></button>
+                                        <button onMouseDown={(e)=>exec(e, 'insertOrderedList')} className="tool-btn font-black">1.</button>
+                                        <button onMouseDown={(e)=>exec(e, 'insertHorizontalRule')} className="tool-btn font-black">HR</button>
+                                        <label className="tool-btn cursor-pointer"><Icon name="image" size={14}/><input type="file" hidden accept="image/*" onChange={(e)=>{const f=e.target.files[0]; const r=new FileReader(); r.onload=(v)=>document.execCommand('insertImage',false,v.target.result); r.readAsDataURL(f);}}/></label>
+                                        <button onMouseDown={(e)=>exec(e, 'createLink', prompt('URL:'))} className="tool-btn font-black text-blue-500">LINK</button>
+                                        <button onMouseDown={(e)=>exec(e, 'unlink')} className="tool-btn font-black opacity-20">UNLK</button>
+                                        <button onMouseDown={(e)=>exec(e, 'undo')} className="tool-btn text-blue-600 font-black">UNDO</button>
+                                        <button onMouseDown={(e)=>exec(e, 'redo')} className="tool-btn text-blue-600 font-black">REDO</button>
+                                        <button onMouseDown={(e)=>exec(e, 'removeFormat')} className="tool-btn text-red-500 font-black">CLR</button>
+                                        <div className="text-[8px] opacity-20 uppercase font-black ml-2">PHYSICAL 28-ITEM ACTIVE</div>
+                                    </div>
+                                    <div className="flex-1 overflow-y-auto p-8 md:p-24 custom-scrollbar">
+                                        <div className="max-w-3xl mx-auto font-black text-black">
+                                            <input className="w-full text-2xl md:text-4xl font-black border-0 outline-none mb-10 text-black bg-transparent font-black" value={notes.find(n=>n.id===activeNoteId)?.title} onChange={e => saveNotes(notes.map(n => n.id === activeNoteId ? {...n, title:e.target.value} : n))} />
+                                            <div ref={editorRef} onInput={handleEditorInput} contentEditable className="w-full min-h-[800px] outline-none text-slate-900 leading-relaxed text-sm md:text-base font-light pb-60 editor-view font-black" dangerouslySetInnerHTML={{ __html: notes.find(n=>n.id===activeNoteId)?.content }}></div>
+                                        </div>
+                                    </div>
+                                </main>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 通讯协作 */}
+                    {view === 'comm' && (
+                        <div className="fixed inset-0 md:m-auto glass-panel z-[1500] flex flex-col overflow-hidden md:w-[96vw] md:h-[90vh] md:rounded-[35px]">
+                            <header className="h-14 border-b border-black/5 flex items-center justify-between px-6 bg-white/50 shrink-0 font-black">
+                                <div className="flex gap-6 items-center">
+                                    <div onClick={()=>setCommMode('chat')} className={`cursor-pointer text-xs uppercase tracking-widest ${commMode==='chat'?'text-black':'text-black/20'}`}>Messages</div>
+                                    <div onClick={()=>setCommMode('mail')} className={`cursor-pointer text-xs uppercase tracking-widest ${commMode==='mail'?'text-black':'text-black/20'}`}>Mail Station</div>
+                                </div>
+                                <button onClick={()=>setView('desktop')} className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><Icon name="close" size={16}/></button>
+                            </header>
+                            <div className="flex flex-1 overflow-hidden">
+                                <aside className="w-72 border-r border-black/5 bg-white/10 flex flex-col p-4 shrink-0 overflow-y-auto custom-scrollbar">
+                                    {commMode === 'chat' ? contacts.map(c => (
+                                        <div key={c.id} onClick={()=>setActiveContactId(c.id)} className={`p-4 mb-2 rounded-2xl cursor-pointer transition-all ${activeContactId===c.id?'bg-black text-white shadow-lg':'hover:bg-white/40 text-black'}`}>
+                                            <div className="flex items-center gap-3"><div className="w-8 h-8 rounded-full bg-black text-white flex items-center justify-center text-[10px] font-black uppercase font-black">{c.avatar}</div><div className="font-black text-[11px] font-black">{c.name}</div></div>
+                                        </div>
+                                    )) : emails.map(e => (
+                                        <div key={e.id} className="p-4 mb-2 rounded-2xl bg-white/40 border border-black/5 cursor-pointer hover:bg-white shadow-sm font-black">
+                                            <div className="text-[10px] font-black uppercase opacity-40">{e.from}</div><div className="text-[11px] font-black truncate">{e.subject}</div>
+                                        </div>
+                                    ))}
+                                </aside>
+                                <main className="flex-1 flex flex-col bg-slate-50/50">
+                                    {commMode === 'chat' ? (
+                                        <>
+                                            <div className="flex-1 overflow-y-auto p-6 md:p-10 custom-scrollbar space-y-4">
+                                                {contacts.find(c=>c.id===activeContactId)?.msgs.map(m => (
+                                                    <div key={m.id} className={`chat-bubble ${m.role==='user'?'chat-user':'chat-target'}`}>{m.text}<div className="text-[8px] mt-2 opacity-30 uppercase font-black font-black">{m.time}</div></div>
+                                                ))}
+                                            </div>
+                                            <div className="p-4 border-t bg-white/80 backdrop-blur-xl flex gap-3 pr-10 md:pr-24">
+                                                <input id="human-msg-input" className="flex-1 bg-slate-100 p-4 rounded-2xl outline-none text-xs font-bold font-black" placeholder="协作消息..." onKeyDown={e=>e.key==='Enter' && handleSendMsg()} />
+                                                <button onClick={handleSendMsg} className="bg-black text-white p-4 rounded-2xl active:scale-95 transition-all"><Icon name="send" size={18}/></button>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="flex-1 p-8 md:p-20 overflow-y-auto custom-scrollbar font-black text-black">
+                                            {emails.map(e => (<div key={e.id} className="mb-10 animate-in fade-in"><div className="text-xl font-black mb-4 border-b border-black/5 pb-4 font-black">{e.subject}</div><div className="text-sm font-bold leading-relaxed text-slate-700">{e.content}</div></div>))}
+                                        </div>
+                                    )}
+                                </main>
+                            </div>
+                        </div>
+                    )}
+
+                    {view === 'planner' && (
+                        <div className="fixed inset-0 md:m-auto glass-panel z-[1500] flex flex-col overflow-hidden md:w-[96vw] md:h-[90vh] md:rounded-[35px]">
+                            <header className="h-14 border-b border-black/5 flex items-center justify-between px-8 bg-white/50 shrink-0 font-black">
+                                <div className="flex gap-6 items-center">
+                                    <div onClick={()=>setPlannerTab('schedule')} className={`cursor-pointer text-xs uppercase tracking-widest ${plannerTab==='schedule'?'text-black':'text-black/20'}`}>Schedules</div>
+                                    <div onClick={()=>setPlannerTab('sticky')} className={`cursor-pointer text-xs uppercase tracking-widest ${plannerTab==='sticky'?'text-black':'text-black/20'}`}>Stickies</div>
+                                </div>
+                                <button onClick={()=>setView('desktop')} className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><Icon name="close" size={16}/></button>
+                            </header>
+                            <div className="flex flex-1 overflow-hidden bg-white/20">
+                                {plannerTab === 'schedule' ? (
+                                    <main className="flex-1 p-6 md:p-8 overflow-y-auto custom-scrollbar">
+                                        <div className="max-w-2xl mx-auto space-y-6">
+                                            <div className="flex flex-col gap-3 font-black">
+                                                <input id="new-task-input" className="glass-input font-black" placeholder="行动描述..." />
+                                                <div className="flex flex-col sm:flex-row gap-3 font-black">
+                                                    <input id="new-task-date" type="date" className="glass-input flex-1 py-3 font-black" /><input id="new-task-time" type="time" className="glass-input flex-1 py-3 font-black" />
+                                                    <button onClick={()=>{const i=document.getElementById('new-task-input'), d=document.getElementById('new-task-date'), t=document.getElementById('new-task-time'); if(i.value.trim()){saveSchedules([{id:Date.now(), text:i.value, done:false, pinned:false, date:d.value, time:t.value},...schedules]); i.value=''; d.value=''; t.value=''}}} className="bg-black text-white px-8 py-3 rounded-xl font-black text-xs uppercase shadow-lg">Add Task</button>
+                                                </div>
+                                            </div>
+                                            <div className="space-y-3">{schedules.map(s => (
+                                                <div key={s.id} className={`flex items-center gap-4 p-4 rounded-2xl bg-white/60 border border-white hover:bg-white transition-all shadow-sm ${s.done ? 'opacity-40' : ''}`}>
+                                                    <button onClick={()=>saveSchedules(schedules.map(x=>x.id===s.id?{...x,done:!x.done}:x))} className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all ${s.done?'bg-black border-black text-white':'border-black/10 hover:border-black'}`}>{s.done && <Icon name="check" size={12}/>}</button>
+                                                    <div className="flex-1 font-black"><div className={`text-[13px] ${s.done?'line-through':''}`}>{s.text}</div><div className="text-[9px] opacity-20 mt-1">{s.date || 'TBD'} | {s.time || '--:--'}</div></div>
+                                                    <button onClick={()=>saveSchedules(schedules.filter(x=>x.id!==s.id))} className="text-red-500 opacity-20 hover:opacity-100 transition-opacity"><Icon name="trash" size={14}/></button>
+                                                </div>
+                                            ))}</div>
+                                        </div>
+                                    </main>
+                                ) : (
+                                    <main className="flex-1 p-6 md:p-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 overflow-y-auto custom-scrollbar font-black text-black">
+                                        <div onClick={()=>saveStickies([{id:Date.now(), text:'', color:'#fef3c7', mood:'Focus', pinned:false, linkedTaskId:null}, ...stickies])} className="aspect-square rounded-[32px] border-4 border-dashed border-black/5 flex flex-col items-center justify-center cursor-pointer hover:bg-white/40 transition-all font-black text-black"><Icon name="plus" size={32} className="opacity-10 mb-4" /><span className="text-[10px] font-black uppercase opacity-20 font-black">New Sticky</span></div>
+                                        {stickies.map(s => (
+                                            <div key={s.id} className="aspect-square p-6 rounded-[32px] flex flex-col shadow-sm relative transition-all" style={{backgroundColor: s.color}}>
+                                                <div className="flex justify-between mb-4 font-black"><select value={s.mood} onChange={(e)=>saveStickies(stickies.map(x=>x.id===s.id?{...x,mood:e.target.value}:x))} className="bg-black/5 rounded-full px-3 py-1 text-[9px] font-black uppercase outline-none font-black">{MOODS.map(m => <option key={m.icon} value={m.icon}>{m.icon}</option>)}</select><button onClick={()=>saveStickies(stickies.filter(x=>x.id!==s.id))} className="opacity-10 hover:text-red-500 hover:opacity-100 font-black"><Icon name="trash" size={12}/></button></div>
+                                                <textarea value={s.text} onChange={(e)=>saveStickies(stickies.map(x=>x.id===s.id?{...x,text:e.target.value}:x))} className="flex-1 bg-transparent border-0 outline-none resize-none text-xs font-bold text-black/70 leading-relaxed font-black" placeholder="写下灵感..." />
+                                                <select className="w-full bg-black/5 rounded-lg px-2 py-1 text-[8px] font-black border-0 outline-none mt-2 font-black" value={s.linkedTaskId || ""} onChange={e=>saveStickies(stickies.map(x=>x.id===s.id?{...x,linkedTaskId:e.target.value?parseInt(e.target.value):null}:x))}><option value="">引用日程...</option>{schedules.map(t=>(<option key={t.id} value={t.id}>{t.text}</option>))}</select>
+                                            </div>
+                                        ))}
+                                    </main>
+                                )}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* 实验室与外部协议 */}
+                    {view === 'lab' && (
+                        <div className="fixed inset-0 md:m-auto glass-panel z-[1500] flex flex-col overflow-hidden shadow-2xl md:w-[96vw] md:h-[90vh] md:rounded-[35px]">
+                            <header className="h-14 border-b border-black/5 flex items-center justify-between px-6 bg-white/50 shrink-0 font-black">
+                                <div className="flex items-center gap-3"><Icon name="lab" size={18} /><h2 className="text-sm uppercase font-black tracking-widest font-black text-black">Laboratory Hub</h2></div>
+                                <button onClick={()=>setView('desktop')} className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center hover:bg-red-500 hover:text-white transition-all"><Icon name="close" size={16}/></button>
+                            </header>
+                            <div className="flex flex-1 overflow-hidden">
+                                <aside className="w-64 md:w-80 border-r border-black/5 bg-white/10 flex flex-col p-6 shrink-0 overflow-y-auto custom-scrollbar font-black text-black">
+                                    <div className="text-[10px] font-black opacity-30 uppercase tracking-widest mb-6 font-black">Interfaces & Software</div>
+                                    <div onClick={()=>{setActivePlugin({name:'内置协作白板', url:'https://www.excalidraw.com/'})}} className="p-4 mb-3 rounded-2xl bg-white/30 border border-white hover:bg-white transition-all cursor-pointer flex items-center gap-3 shadow-sm font-black"><Icon name="board" size={14}/><div className="text-[11px] font-black font-black text-black uppercase">内置协作白板</div></div>
+                                    {config.plugins.map((p, idx) => (
+                                        <div key={idx} onClick={()=>p.url.includes('://') && !p.url.startsWith('http') ? window.location.assign(p.url) : setActivePlugin(p)} className="group p-4 mb-3 rounded-2xl bg-white/30 border border-white hover:bg-white transition-all cursor-pointer flex items-center gap-3 shadow-sm font-black text-black font-black">
+                                            <Icon name={p.url.includes('://') && !p.url.startsWith('http') ? "external" : "plugin"} size={14} className="opacity-40" /><div className="text-[11px] truncate flex-1 font-black text-black">{p.name}</div>
+                                        </div>
+                                    ))}
+                                    <div className="mt-auto border-t border-black/5 pt-6 space-y-4 font-black">
+                                        <input className="glass-input mb-1 font-black" placeholder="URL or Protocol://" id="lab-u" /><button onClick={()=>{const u=document.getElementById('lab-u').value; if(u) saveConfig({...config, plugins:[...config.plugins, {name:u.substring(0,10), url:u}]});}} className="w-full py-2.5 bg-black text-white rounded-xl text-[9px] font-black uppercase shadow-lg font-black font-black">Register Interface</button>
+                                    </div>
+                                </aside>
+                                <main className="flex-1 bg-slate-100 flex items-center justify-center relative font-black text-black">{activePlugin ? <iframe src={activePlugin.url} className="plugin-frame"></iframe> : <div className="text-center opacity-10 font-black italic"><Icon name="lab" size={100} /><div className="mt-10 uppercase tracking-[1em] text-xs font-black">Laboratory Hub Active</div></div>}</main>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* AI Copilot Panel */}
+                    <div className="fixed right-6 bottom-6 md:right-10 md:bottom-10 w-14 h-14 bg-black border border-white/20 rounded-full flex items-center justify-center cursor-pointer z-[11000] shadow-2xl active:scale-90 transition-transform no-print font-black" onClick={()=>setIsAiOpen(!isAiOpen)}><div className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></div></div>
+                    <div className={`ai-panel fixed z-[11000] inset-0 md:inset-auto md:top-10 md:bottom-10 md:right-10 md:width-[420px] md:height-auto md:rounded-[35px] transition-all duration-500 bg-white shadow-2xl overflow-hidden flex flex-col ${isAiOpen ? 'translate-y-0 opacity-100' : 'translate-y-[120%] opacity-0'}`}>
+                        <div className="p-6 border-b border-black/5 flex justify-between items-center bg-white shrink-0 font-black"><div className="text-black italic text-xs tracking-widest uppercase font-black text-black font-black">Nik Copilot Assistant</div><button onClick={()=>setIsAiOpen(false)} className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center text-black/30 hover:text-red-500"><Icon name="close" size={18}/></button></div>
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar bg-slate-50 font-black text-black font-black">
+                            {aiHistory.map((h, i) => (
+                                <div key={i} className={`flex flex-col ${h.role === 'user' ? 'items-end' : 'items-start'}`}>
+                                    <div className={`p-4 rounded-2xl max-w-[90%] text-xs font-bold font-black ${h.role === 'user' ? 'bg-black text-white shadow-lg font-black' : 'bg-white border border-black/5 text-slate-800 shadow-sm font-black'}`}>
+                                        {h.text}
+                                        {h.action && (
+                                            <div className="mt-4 p-3 bg-blue-50 border border-blue-100 rounded-xl font-black">
+                                                <div className="text-[10px] uppercase font-black text-blue-600 mb-2 tracking-widest font-black">Action Suggestion</div>
+                                                <button onClick={()=>handleAiAction(h.action)} className="w-full py-2 bg-blue-600 text-white rounded-lg text-[10px] font-black uppercase font-black shadow-lg">Confirm & Fill</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="text-[8px] mt-1 opacity-20 font-black uppercase font-black">{h.time}</div>
+                                </div>
+                            ))}
+                        </div>
+                        <div className="p-4 border-t flex flex-col gap-3 bg-white pb-[calc(1rem+env(safe-area-inset-bottom))] font-black">
+                            <div className="flex justify-between items-center"><button onClick={()=>setIsAiScanning(!isAiScanning)} className={`flex items-center gap-2 px-3 py-1.5 rounded-full transition-all border ${isAiScanning ? 'bg-black text-white border-black shadow-lg font-black' : 'opacity-50 font-black'}`}><Icon name="scan" size={10} /><span className="text-[9px] uppercase font-black">Context Injected</span></button></div>
+                            <div className="flex gap-2 font-black"><input id="ai-input" className="flex-1 bg-slate-100 p-3 rounded-xl outline-none text-xs font-bold font-black" placeholder="下达分析或填充指令..." onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){callAiApi(e.target.value); e.target.value=''}}} /><button onClick={()=>{const i=document.getElementById('ai-input'); if(i){callAiApi(i.value); i.value=''}}} className="bg-black text-white p-3 rounded-xl shadow-lg active:scale-95 font-black"><Icon name="send" size={16}/></button></div>
+                        </div>
+                    </div>
+
+                    {/* 配置中心 */}
+                    {view === 'settings' && (
+                        <div className="fixed inset-0 md:m-auto glass-panel z-[5000] flex flex-col overflow-hidden shadow-2xl md:w-[90vw] md:max-w-[650px] md:h-[80vh] md:rounded-[35px]">
+                            <div className="p-8 border-b border-black/5 flex justify-between items-center bg-white/50 shrink-0 font-black"><span className="text-xs uppercase tracking-widest text-black font-black font-black">Master Configuration Hub</span><div onClick={()=>setView('desktop')} className="cursor-pointer text-black/30 hover:text-red-500 transition-colors font-black"><Icon name="close" size={20} /></div></div>
+                            <div className="flex-1 overflow-y-auto p-8 md:p-10 space-y-10 custom-scrollbar font-black text-black">
+                                <section className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-6 items-center font-black text-black"><label className="text-[10px] uppercase opacity-30 font-black text-black">Identity</label><input className="glass-input font-black" value={config.username} onChange={e=>saveConfig({...config, username:e.target.value})} /></section>
+                                
+                                <section><label className="text-[10px] font-black uppercase opacity-30 tracking-widest block mb-4">Environment</label><div className="grid grid-cols-5 gap-3">{PRESET_WALLS.map(w => (<div key={w} onClick={()=>saveConfig({...config, wallpaper:w})} className={`aspect-video rounded-xl border-2 transition-all cursor-pointer bg-cover bg-center ${config.wallpaper===w?'border-black scale-95 shadow-lg':'border-transparent opacity-60'}`} style={{backgroundImage:`url(${w})`}}></div>))}<label className="aspect-video rounded-xl border-2 border-dashed border-black/10 flex items-center justify-center cursor-pointer hover:bg-black/5 transition-all"><Icon name="upload" size={16} className="opacity-20" /><input type="file" hidden accept="image/*" onChange={handleWallUpload} /></label></div></section>
+
+                                <section className="space-y-4 font-black">
+                                    <label className="text-[10px] uppercase opacity-30 font-black font-black">Intelligence API Stack</label>
+                                    {['aiBaseUrl', 'aiKey', 'aiModel', 'localBaseUrl', 'localModel'].map(k => (
+                                        <div key={k} className="grid grid-cols-1 sm:grid-cols-[120px_1fr] gap-4 items-center font-black"><span className="text-[10px] opacity-20 uppercase font-black">{k}</span><input className="glass-input font-black" value={config[k]} onChange={e=>saveConfig({...config, [k]:e.target.value})} /></div>
+                                    ))}
+                                </section>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
         };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
