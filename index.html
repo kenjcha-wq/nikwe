@@ -521,17 +521,17 @@ body {
 
 /* 响应式：手机端 */
 @media (max-width: 599px) {
-  .tiles-grid { grid-template-columns: 1fr 1fr; gap: 0.4rem; padding: 0 0.4rem; box-sizing: border-box; }
-  .tile-card { padding: 0.5rem 0.35rem; background: transparent; box-shadow: none; }
-  .tile-sym { font-size: 0.78rem; margin-bottom: 0.25rem; }
-  .tile-items { gap: 0.08rem; }
+  .tiles-grid { grid-template-columns: 1fr 1fr; gap: 0.4rem; padding: 0; width: 100%; box-sizing: border-box; }
+  .tile-card { padding: 0.5rem 0.35rem; background: rgba(255,252,245,0.72); box-shadow: none; }
+  .tile-sym { font-size: 0.82rem; margin-bottom: 0.28rem; }
+  .tile-items { gap: 0.1rem; }
   .tile-item { padding: 0.1rem 0; }
-  .tile-text { font-size: 0.6rem; -webkit-line-clamp: 2; }
-  .tile-meta { font-size: 0.52rem; }
-  .tile-empty { font-size: 0.56rem; }
+  .tile-text { font-size: 0.72rem; -webkit-line-clamp: 2; }
+  .tile-meta { font-size: 0.58rem; }
+  .tile-empty { font-size: 0.6rem; }
   .tile-dot { width: 3px; height: 3px; margin-top: 0.18rem; }
 
-  .datetime-time { font-size: 2.8rem; }
+  .datetime-time { font-size: 3.4rem; }
   .datetime-date { font-size: 0.72rem; }
   .main-content { padding: 0.5rem 0.6rem 5rem; }
 
@@ -579,6 +579,12 @@ body {
 @media (max-width: 380px) {
   .datetime-time { font-size: 2.7rem; }
 }
+.toggle-switch{position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;cursor:pointer;inset:0;background:#ccc;border-radius:20px;transition:.25s}
+.toggle-slider::before{position:absolute;content:'';height:14px;width:14px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.toggle-switch input:checked+.toggle-slider{background:#555}
+.toggle-switch input:checked+.toggle-slider::before{transform:translateX(16px)}
 </style>
 </head>
 <body>
@@ -746,6 +752,13 @@ body {
         <div class="color-option" style="background:#fff0f8" data-color="#fff0f8"></div>
         <div class="color-option" style="background:#f5f5f5" data-color="#f5f5f5"></div>
       </div>
+    </div>
+    <div class="form-group" style="display:flex;align-items:center;gap:0.6rem;margin-top:0.5rem">
+      <label style="margin:0;font-size:0.82rem;color:var(--text-secondary)">展示在首页</label>
+      <label class="toggle-switch">
+        <input type="checkbox" id="notePinCheckbox">
+        <span class="toggle-slider"></span>
+      </label>
     </div>
     <div class="form-group"><label>心情</label>
       <div class="mood-picker">
@@ -1071,7 +1084,7 @@ function updateTilePreviews() {
   const pinned = notes.filter(n => (config.pinnedNoteIds || []).includes(n.id)).slice(0, 3);
   const noteC = document.getElementById('noteTileItems');
   if (!pinned.length) {
-    noteC.innerHTML = '<div class="tile-empty" style="cursor:pointer" onclick="openNotePinModal()">点击选择显示的便签</div>';
+    noteC.innerHTML = '<div class="tile-empty">暂无便签</div>';
   } else {
     noteC.innerHTML = pinned.map(n => `
       <div class="tile-item">
@@ -1202,6 +1215,7 @@ function openNoteForm(){
   selectedColor=NOTE_COLORS[0]; selectedMood='平静';
   document.querySelectorAll('#noteFormModal .color-option').forEach((el,i)=>el.classList.toggle('selected',i===0));
   document.querySelectorAll('#noteFormModal .mood-option').forEach(el=>el.classList.toggle('selected',el.dataset.mood==='平静'));
+  document.getElementById('notePinCheckbox').checked=false;
   closeModal('noteModal'); openModal('noteFormModal');
 }
 function editNote(id){
@@ -1213,6 +1227,8 @@ function editNote(id){
   selectedColor=n.color; selectedMood=n.mood;
   document.querySelectorAll('#noteFormModal .color-option').forEach(el=>el.classList.toggle('selected',el.dataset.color===n.color));
   document.querySelectorAll('#noteFormModal .mood-option').forEach(el=>el.classList.toggle('selected',el.dataset.mood===n.mood));
+  const config=getData(DB_KEYS.config)||{}; const pinned=(config.pinnedNoteIds||[]);
+  document.getElementById('notePinCheckbox').checked=pinned.includes(id);
   closeModal('noteModal'); openModal('noteFormModal');
 }
 function saveNote(){
@@ -1223,6 +1239,12 @@ function saveNote(){
   if(id){const i=notes.findIndex(n=>n.id===id);if(i!==-1)notes[i]={...notes[i],content,color:selectedColor,mood:selectedMood};}
   else notes.push({id:Date.now().toString(),content,color:selectedColor,mood:selectedMood,created:new Date().toISOString()});
   saveData(DB_KEYS.notes,notes);
+  // 同步首页展示勾选状态
+  const config=getData(DB_KEYS.config)||{}; let pinned=config.pinnedNoteIds||[];
+  const wantPin=document.getElementById('notePinCheckbox').checked;
+  if(wantPin&&!pinned.includes(id)){pinned.push(id);}
+  else if(!wantPin){pinned=pinned.filter(pid=>pid!==id);}
+  config.pinnedNoteIds=pinned; saveData(DB_KEYS.config,config);
   closeModal('noteFormModal'); updateTilePreviews();
   if(id)openNotes();
 }
