@@ -124,6 +124,7 @@ body {
  overflow: hidden; 
  white-space: nowrap;
  border: 1px solid rgba(255,255,255,0.3);
+ cursor: pointer;
 }
 .news-content { display: inline-block; animation: scrollNews 30s linear infinite; font-size: 0.75rem; color: var(--text-secondary); }
 .news-content span { margin: 0 1.2rem; }
@@ -388,8 +389,8 @@ body {
   </div>
   <div class="app-datetime"><div class="datetime-time" id="currentTime">--:--</div><div class="datetime-date" id="currentDate">----年--月--日</div></div>
 
-  <!-- 滚动新闻 -->
-  <div class="news-scroll" onclick="openNewsModal()"><div class="news-content" id="newsContent">📰 加载中...</div></div>
+  <!-- 滚动新闻 - 真实抓取 -->
+  <div class="news-scroll" onclick="openNewsModal()"><div class="news-content" id="newsContent">📰 加载新闻中...</div></div>
 
   <!-- 生存时间 + 提醒 -->
   <div class="life-stats"><span class="life-label">📅 我已存在</span><span class="life-value" id="lifeDays">-- 天</span><span class="life-label">⏰ 提醒</span><span class="life-value" id="reminderStatus">--</span></div>
@@ -415,7 +416,7 @@ body {
 <!-- AI 对话浮层 -->
 <div id="aiChatPanel" class="ai-chat-panel hidden">
  <div class="ai-chat-header"><span>✨ NikO 助手</span><button onclick="closeAIChat()" style="background:none; border:none; color:white; font-size:1.1rem; cursor:pointer">✕</button></div>
- <div id="aiChatMessages" class="ai-chat-messages"><div class="ai-msg ai"><div class="bubble">你好！我是 NikO 生活助手~</div></div></div>
+ <div id="aiChatMessages" class="ai-chat-messages"><div class="ai-msg ai"><div class="bubble">你好！我是 NikO，您的生活助手~</div></div></div>
  <div class="ai-chat-input"><input type="text" id="aiChatInput" placeholder="输入消息..." onkeypress="if(event.key==='Enter')sendAIMessage()"><button onclick="sendAIMessage()">→</button></div>
  <div style="padding:6px 12px; border-top:1px solid #eee; display:flex; justify-content:space-between; background:#fafafa;"><span style="font-size:0.65rem; color:#999">历史记录</span><button onclick="toggleAIHistory()" style="font-size:0.65rem; background:none; border:none; color:var(--accent); cursor:pointer">📋</button></div>
  <div id="aiHistoryList" style="display:none; max-height:120px; overflow-y:auto; background:white;"></div>
@@ -431,7 +432,7 @@ body {
  <div id="reminderStatusText" style="margin-top:0.8rem; font-size:0.7rem; color:var(--text-muted)"></div></div>
 </div>
 
-<!-- 日程模态框 -->
+<!-- 日程模态框 - 新建按钮在顶部 -->
 <div class="modal-overlay" id="scheduleModal">
  <div class="modal">
   <div class="list-header"><h3>日程</h3><button class="btn-sm" onclick="openScheduleForm()">+ 新建</button></div>
@@ -441,7 +442,7 @@ body {
 </div>
 <div class="modal-overlay" id="scheduleFormModal"><div class="modal"><div class="modal-header"><span class="modal-title" id="scheduleFormTitle">新建日程</span><button class="modal-close" onclick="closeModal('scheduleFormModal')">✕</button></div><input type="hidden" id="scheduleId"><div class="form-group"><label>标题</label><input type="text" id="scheduleTitle" maxlength="50"></div><div class="form-group" style="display:grid;grid-template-columns:1fr 1fr;gap:0.8rem"><div><label>日期</label><input type="date" id="scheduleDate"></div><div><label>时间</label><input type="time" id="scheduleTime"></div></div><div class="form-group"><label>备注</label><textarea id="scheduleNote" maxlength="500"></textarea></div><div class="form-actions"><button class="btn btn-secondary" onclick="closeModal('scheduleFormModal')">取消</button><button class="btn btn-danger" id="scheduleDelBtn" style="display:none" onclick="confirmDeleteSchedule()">删除</button><button class="btn btn-primary" onclick="saveSchedule()">保存</button></div></div></div>
 
-<!-- 便签模态框 -->
+<!-- 便签模态框 - 新建按钮在顶部 -->
 <div class="modal-overlay" id="noteModal">
  <div class="modal">
   <div class="list-header"><h3>便签</h3><button class="btn-sm" onclick="openNoteForm()">+ 新建</button></div>
@@ -450,7 +451,7 @@ body {
 </div>
 <div class="modal-overlay" id="noteFormModal"><div class="modal"><div class="modal-header"><span class="modal-title" id="noteFormTitle">新建便签</span><button class="modal-close" onclick="closeModal('noteFormModal')">✕</button></div><input type="hidden" id="noteId"><div class="form-group"><label>内容</label><textarea id="noteContent" maxlength="1000"></textarea></div><div class="form-group"><label>颜色</label><div class="color-picker"><div class="color-option selected" style="background:#fff9e6" data-color="#fff9e6"></div><div class="color-option" style="background:#e6f4ff" data-color="#e6f4ff"></div><div class="color-option" style="background:#f0fdf4" data-color="#f0fdf4"></div><div class="color-option" style="background:#fff0f8" data-color="#fff0f8"></div><div class="color-option" style="background:#f5f5f5" data-color="#f5f5f5"></div></div></div><div class="form-group"><label>展示在首页</label><label class="toggle-switch"><input type="checkbox" id="notePinCheckbox"><span class="toggle-slider"></span></label></div><div class="form-group"><label>心情</label><div class="mood-picker"><div class="mood-option selected" data-mood="平静">😌 平静</div><div class="mood-option" data-mood="开心">😊 开心</div><div class="mood-option" data-mood="难过">😔 难过</div><div class="mood-option" data-mood="期待">✨ 期待</div><div class="mood-option" data-mood="疲惫">😴 疲惫</div></div></div><div class="form-actions"><button class="btn btn-secondary" onclick="closeModal('noteFormModal')">取消</button><button class="btn btn-danger" id="noteDelBtn" style="display:none" onclick="confirmDeleteNote()">删除</button><button class="btn btn-success" id="noteToScheduleBtn" onclick="noteToSchedule()">转为日程</button><button class="btn btn-primary" onclick="saveNote()">保存</button></div></div></div>
 
-<!-- 随手记模态框 -->
+<!-- 随手记模态框 - 新建按钮在顶部 -->
 <div class="modal-overlay" id="recordModal">
  <div class="modal">
   <div class="list-header"><h3>随手记</h3><button class="btn-sm" onclick="openQuickNoteForm()">+ 新建</button></div>
@@ -495,7 +496,7 @@ let reminderInterval = null;
 let aiConfig = { apiKey: '', apiBase: 'https://api.siliconflow.cn/v1', model: 'deepseek-ai/DeepSeek-V3' };
 let aiHistory = [];
 
-document.addEventListener('DOMContentLoaded', () => { checkFirstRun(); setupColorPicker(); setupMoodPicker(); renderNoteBgColorPicker(); setupNews(); startReminderCheck(); });
+document.addEventListener('DOMContentLoaded', () => { checkFirstRun(); setupColorPicker(); setupMoodPicker(); renderNoteBgColorPicker(); fetchRealNews(); startReminderCheck(); });
 
 function checkFirstRun() {
  const config = getData(DB_KEYS.config);
@@ -543,6 +544,31 @@ function updateLifeDays() { const config = getData(DB_KEYS.config) || {}; if (co
 function openEditBirthday() { const config = getData(DB_KEYS.config) || {}; document.getElementById('birthdayInput').value = config.birthday || ''; closeModal('settingsModal'); openModal('editBirthdayModal'); }
 function saveBirthday() { const birthday = document.getElementById('birthdayInput').value; const config = getData(DB_KEYS.config) || {}; config.birthday = birthday; saveData(DB_KEYS.config, config); document.getElementById('settingsBirthday').textContent = birthday || '未设置'; updateLifeDays(); closeModal('editBirthdayModal'); openModal('settingsModal'); }
 
+// 真实新闻抓取
+async function fetchRealNews() {
+ try {
+  // 使用免费的新闻API（中文）
+  const res = await fetch('https://api.51vstan.com/api/news?page=1&limit=10');
+  if (res.ok) {
+   const data = await res.json();
+   if (data.data && data.data.length) {
+    const newsList = data.data.slice(0, 8).map(item => `📰 ${item.title}`);
+    document.getElementById('newsContent').innerHTML = newsList.map(n => `<span>${n}</span>`).join('') + '<span>✨ NikO 生活助手</span>';
+    return;
+   }
+  }
+  throw new Error('fallback');
+ } catch(e) {
+  // 备用新闻
+  const fallbackNews = ['📰 存在即真实', '✨ NikO 随知而行', '💡 Niko 随心而记', '📅 别忘了查看日程', '📝 今天想写点什么？'];
+  document.getElementById('newsContent').innerHTML = fallbackNews.map(n => `<span>${n}</span>`).join('');
+ }
+}
+function openNewsModal() { 
+ const newsText = document.getElementById('newsContent').innerText;
+ alert('今日资讯\n\n' + newsText);
+}
+
 // 提醒
 function openReminderSettings() { const reminder = getData(DB_KEYS.reminder) || { text: '喝水', interval: 60, enabled: false }; document.getElementById('reminderText').value = reminder.text || '喝水'; document.getElementById('reminderInterval').value = reminder.interval || 60; document.getElementById('reminderEnabled').checked = reminder.enabled || false; updateReminderStatus(); openModal('reminderModal'); }
 function closeReminderSettings() { closeModal('reminderModal'); }
@@ -551,10 +577,6 @@ function updateReminderStatus() { const reminder = getData(DB_KEYS.reminder) || 
 function startReminderCheck() { const reminder = getData(DB_KEYS.reminder); if (!reminder || !reminder.enabled) return; reminderInterval = setInterval(() => { const now = Date.now(); if (reminder.nextRemind && now >= reminder.nextRemind) { showReminderToast(reminder.text); reminder.nextRemind = now + reminder.interval * 60 * 1000; saveData(DB_KEYS.reminder, reminder); } }, 10000); }
 function showReminderToast(text) { const toast = document.getElementById('reminderToast'); document.getElementById('reminderToastContent').innerHTML = `该${text}了~`; toast.classList.remove('hidden'); setTimeout(() => closeReminderToast(), 5000); }
 function closeReminderToast() { document.getElementById('reminderToast').classList.add('hidden'); }
-
-// 新闻
-function setupNews() { const newsList = ['📰 存在即真实', '✨ NikO 随知而行', '💡 Niko 随心而记', '📅 看看日程', '📝 今日有什么记录吗']; document.getElementById('newsContent').innerHTML = newsList.map(n => `<span>${n}</span>`).join(''); }
-function openNewsModal() { alert('今日小贴士\n\n' + document.getElementById('newsContent').innerText); }
 
 // AI 对话
 function loadAIHistory() { aiHistory = getData(DB_KEYS.aiHistory) || []; renderAIHistoryList(); }
@@ -571,7 +593,6 @@ async function sendAIMessage() {
  container.insertAdjacentHTML('beforeend', `<div id="${thinkingId}" class="ai-msg ai"><div class="bubble">${showThinkingIndicator()}</div></div>`);
  container.scrollTop = container.scrollHeight;
  
- // 加载 AI 配置
  let aiCfg = getData('niko_ai_config');
  if (!aiCfg || !aiCfg.apiKey) { aiCfg = { apiKey: '', apiBase: 'https://api.siliconflow.cn/v1', model: 'deepseek-ai/DeepSeek-V3' }; }
  
@@ -586,7 +607,7 @@ async function sendAIMessage() {
    body: JSON.stringify({ model: aiCfg.model, messages: [{ role: 'system', content: '你是 NikO，一个温暖贴心的生活助手。' }, { role: 'user', content: msg }], stream: false }) 
   });
   const data = await res.json(); 
-  const reply = data.choices?.[0]?.message?.content || '抱歉，我暂时无法回答';
+  const reply = data.choices?.[0]?.message?.content || '您的Niko此刻不在线中';
   const thinkingDiv = document.getElementById(thinkingId);
   if(thinkingDiv) thinkingDiv.querySelector('.bubble').innerHTML = escapeHtml(reply);
   aiHistory.unshift({ id: Date.now(), question: msg, answer: reply, time: Date.now() }); 
