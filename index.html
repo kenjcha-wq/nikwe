@@ -1,3 +1,5 @@
+
+html
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -76,9 +78,9 @@ body {
 /* 主应用 */
 .app-page { display: none; min-height: 100vh; }
 .app-page.active { display: block; }
-.main-content { max-width: 800px; margin: 0 auto; padding: 1rem 1rem 5rem; }
+.main-content { max-width: 800px; margin: 0 auto; padding: 1rem 1rem 4rem; }
 
-/* 顶栏 - 手机端纯透明背景深色字 */
+/* 顶栏 */
 .app-topbar { display: flex; justify-content: space-between; align-items: flex-start; padding: 0.5rem 0 1rem; }
 .topbar-left { display: flex; flex-direction: column; gap: 0.2rem; }
 .topbar-location { font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.2rem; }
@@ -87,10 +89,10 @@ body {
 .topbar-logo { font-family: var(--font-display); font-size: 1.6rem; font-weight: 600; letter-spacing: 0.08em; line-height: 1; }
 .topbar-slogan { font-size: 0.6rem; color: var(--text-muted); letter-spacing: 0.3em; margin-top: 0.2rem; }
 
-/* 时间区 - 手机端纯透明背景深色字 */
-.app-datetime { text-align: center; padding: 1rem 0; }
-.datetime-time { font-family: var(--font-display); font-size: 3.5rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1; margin-bottom: 0.3rem; }
-.datetime-date { font-size: 0.8rem; color: var(--text-muted); }
+/* 时间区 */
+.app-datetime { text-align: center; padding: 0.8rem 0; }
+.datetime-time { font-family: var(--font-display); font-size: 3.2rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1; margin-bottom: 0.2rem; }
+.datetime-date { font-size: 0.75rem; color: var(--text-muted); }
 
 /* 磁贴 - 透明度提高（比半透明再透明） */
 .tiles-grid { 
@@ -109,59 +111,77 @@ body {
   transition: all 0.25s ease;
 }
 .tile-card:active { transform: scale(0.97); }
-.tile-sym { font-size: 1.5rem; margin-bottom: 0.5rem; opacity: 0.7; filter: grayscale(1); }
-.tile-title { font-weight: 500; font-size: 0.8rem; margin-bottom: 0.5rem; color: #333; }
-.tile-items { display: flex; flex-direction: column; gap: 0.3rem; }
-.tile-item { display: flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0; }
+.tile-sym { font-size: 1.5rem; margin-bottom: 0.4rem; opacity: 0.7; filter: grayscale(1); }
+.tile-title { font-weight: 500; font-size: 0.8rem; margin-bottom: 0.4rem; color: #333; }
+.tile-items { display: flex; flex-direction: column; gap: 0.25rem; }
+.tile-item { display: flex; align-items: center; gap: 0.35rem; padding: 0.15rem 0; }
 .tile-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
 .tile-text { font-size: 0.7rem; color: #555; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }
-.tile-meta { font-size: 0.6rem; color: var(--text-muted); }
+.tile-meta { font-size: 0.55rem; color: var(--text-muted); }
 .tile-empty { font-size: 0.7rem; color: var(--text-muted); }
 
-/* 滚动新闻 */
+/* 滚动新闻 - 所有端纯透明，字体加深加粗 */
 .news-scroll { 
- background: rgba(255,255,255,0.6); 
- backdrop-filter: blur(20px);
- border-radius: var(--radius-md); 
- padding: 0.6rem 1rem; 
- margin: 0.5rem 0; 
+ background: transparent !important;
+ backdrop-filter: none !important;
+ border-radius: 0; 
+ padding: 0.4rem 0.5rem; 
+ margin: 0.3rem 0; 
  overflow: hidden; 
  white-space: nowrap;
- border: 1px solid rgba(255,255,255,0.3);
+ border: none;
  cursor: pointer;
 }
-.news-content { display: inline-block; animation: scrollNews 30s linear infinite; font-size: 0.75rem; color: var(--text-secondary); }
-.news-content span { margin: 0 1.2rem; }
+.news-content { 
+ display: inline-block; 
+ animation: scrollNews 30s linear infinite; 
+ font-size: 0.75rem; 
+ color: #1a1a1a !important; 
+ font-weight: 600 !important;
+}
+.news-content span { margin: 0 1rem; }
 @keyframes scrollNews { 0% { transform: translateX(100%); } 100% { transform: translateX(-100%); } }
 
-/* 生存时间 + 提醒 */
+/* 生存时间 + 提醒 - 所有端纯透明，字体加深加粗 */
 .life-stats { 
- background: rgba(255,255,255,0.6); 
- backdrop-filter: blur(20px);
- border-radius: var(--radius-md); 
- padding: 0.7rem 1rem; 
- margin: 0.5rem 0; 
+ background: transparent !important;
+ backdrop-filter: none !important;
+ border-radius: 0; 
+ padding: 0.4rem 0.5rem; 
+ margin: 0.2rem 0; 
  display: flex; 
  justify-content: space-between; 
  align-items: center;
- border: 1px solid rgba(255,255,255,0.3);
+ border: none;
 }
-.life-label { font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; gap: 0.3rem; }
-.life-value { font-size: 0.85rem; font-weight: 500; color: #4a4a4a; }
+.life-label { 
+ font-size: 0.7rem; 
+ color: #1a1a1a !important; 
+ font-weight: 600 !important;
+ display: flex; 
+ align-items: center; 
+ gap: 0.2rem; 
+}
+.life-value { 
+ font-size: 0.75rem; 
+ font-weight: 700 !important; 
+ color: #1a1a1a !important; 
+}
 
-/* 操作按钮行 - 电脑端只保留搜索和设置（去掉随手记） */
+/* 操作按钮行 - 底部不超出屏幕 */
 .actions-row { 
   display: flex; 
-  gap: 0.8rem; 
+  gap: 1rem; 
   justify-content: center; 
-  margin: 1.8rem 0 1rem;
+  margin: 1.5rem 0 0.5rem;
+  padding-bottom: 0.5rem;
 }
 .action-btn { 
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 0.3rem;
-  padding: 0.6rem 0.8rem;
+  padding: 0.6rem 1rem;
   border: 1px solid rgba(255,255,255,0.5);
   border-radius: var(--radius-md);
   background: rgba(255,255,255,0.55);
@@ -176,46 +196,85 @@ body {
 
 .logout-btn { position: fixed; top: 1rem; right: 1rem; padding: 0.35rem 0.8rem; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05); border-radius: 20px; cursor: pointer; font-size: 0.65rem; color: var(--text-muted); z-index: 100; }
 
-/* 手机端专属优化：顶栏和时间区纯透明背景，文字深色 */
+/* ========== 手机端专属优化 ========== */
 @media (max-width: 599px) {
   /* 顶栏纯透明 + 深色字 */
   .app-topbar {
     background: transparent !important;
     backdrop-filter: none !important;
+    padding: 0.3rem 0 0.5rem;
   }
-  .topbar-location, .topbar-weather, .topbar-logo, .topbar-slogan {
-    color: #1a1a1a !important;
-    text-shadow: none;
-  }
-  /* 时间区纯透明 + 深色字 */
+  .topbar-logo { font-size: 1.4rem; }
+  .topbar-slogan { font-size: 0.55rem; }
+  .topbar-location, .topbar-weather { font-size: 0.6rem; }
+  
+  /* 时间区 */
   .app-datetime {
-    background: transparent !important;
+    padding: 0.4rem 0;
   }
   .datetime-time {
-    color: #1a1a1a !important;
-    text-shadow: none;
+    font-size: 2.6rem;
+    color: #1a1a1a;
   }
   .datetime-date {
-    color: #3a3a3a !important;
+    font-size: 0.7rem;
+    color: #3a3a3a;
   }
   
-  .tiles-grid { grid-template-columns: 1fr; gap: 0.7rem; margin: 0.8rem 0; }
-  .tile-card { padding: 0.8rem; background: rgba(255,255,255,0.5); }
-  .tile-sym { font-size: 1.4rem; margin-bottom: 0.3rem; }
-  .tile-title { font-size: 0.8rem; }
-  .datetime-time { font-size: 2.8rem; }
-  .main-content { padding: 0.8rem 0.8rem 6rem; }
+  /* 磁贴：适当缩小（不过度缩小），改为竖向列表但保持舒适尺寸 */
+  .tiles-grid { 
+    grid-template-columns: 1fr; 
+    gap: 0.7rem; 
+    margin: 0.7rem 0;
+  }
+  .tile-card { 
+    padding: 0.85rem;
+    background: rgba(255,255,255,0.5);
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .tile-card .tile-sym { 
+    font-size: 1.5rem; 
+    margin-bottom: 0;
+    flex-shrink: 0;
+  }
+  .tile-card .tile-info { flex: 1; }
+  .tile-title { font-size: 0.8rem; margin-bottom: 0.3rem; }
+  .tile-items { gap: 0.2rem; }
+  .tile-text { font-size: 0.68rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .tile-empty { font-size: 0.68rem; }
+  
+  /* 新闻和生存区 */
+  .news-scroll { padding: 0.3rem 0.4rem; }
+  .news-content { font-size: 0.68rem; animation: scrollNews 25s linear infinite; font-weight: 600; }
+  .life-stats { padding: 0.3rem 0.4rem; }
+  .life-label { font-size: 0.65rem; font-weight: 600; }
+  .life-value { font-size: 0.7rem; font-weight: 700; }
+  
+  .main-content { padding: 0.6rem 0.8rem 4rem; }
   .logout-btn { display: none; }
+  
+  /* 底部操作行 */
+  .actions-row { 
+    margin: 1rem 0 0.3rem;
+    gap: 0.8rem;
+  }
+  .action-btn { 
+    padding: 0.5rem 0.7rem;
+    min-width: 60px;
+  }
+  .action-btn .icon { font-size: 1rem; }
+  .action-btn .label { font-size: 0.6rem; }
+  
   .mobile-settings-fab {
-    display: flex; position: fixed; bottom: 24px; right: 20px; width: 52px; height: 52px;
-    background: rgba(30,30,40,0.85); backdrop-filter: blur(12px); border-radius: 30px;
-    align-items: center; justify-content: center; color: white; font-size: 1.4rem;
+    display: flex; position: fixed; bottom: 20px; right: 16px; width: 48px; height: 48px;
+    background: rgba(30,30,40,0.85); backdrop-filter: blur(12px); border-radius: 28px;
+    align-items: center; justify-content: center; color: white; font-size: 1.3rem;
     cursor: pointer; z-index: 100; border: 1px solid rgba(255,255,255,0.3);
   }
-  .floating-ai-ball { bottom: 90px; width: 48px; height: 48px; font-size: 1.2rem; }
-  .ai-chat-panel { bottom: 150px; width: 290px; height: 420px; }
-  .life-stats { padding: 0.5rem 0.8rem; }
-  .news-scroll { padding: 0.4rem 0.8rem; }
+  .floating-ai-ball { bottom: 80px; width: 46px; height: 46px; font-size: 1.1rem; right: 16px; }
+  .ai-chat-panel { bottom: 135px; width: 290px; height: 420px; right: 16px; }
 }
 @media (min-width: 600px) { 
   .mobile-settings-fab { display: none; }
@@ -367,7 +426,7 @@ body {
  <div class="main-content">
   <div class="app-topbar">
    <div class="topbar-left"><div class="topbar-location">📍<span id="locationText">定位中...</span></div><div class="topbar-weather"><span id="weatherIcon">🌤</span><span id="weatherText">--°C</span></div></div>
-   <div class="topbar-right"><div class="topbar-logo">NikO</div><div class="topbar-slogan">随心而记</div></div>
+   <div class="topbar-right"><div class="topbar-logo">NikO</div><div class="topbar-slogan">随心而记 随知而行</div></div>
   </div>
   <div class="app-datetime"><div class="datetime-time" id="currentTime">--:--</div><div class="datetime-date" id="currentDate">----年--月--日</div></div>
 
@@ -375,16 +434,16 @@ body {
   <div class="news-scroll" onclick="openNewsModal()"><div class="news-content" id="newsContent">📰 加载新闻中...</div></div>
 
   <!-- 生存时间 + 提醒 -->
-  <div class="life-stats"><span class="life-label">📅 我已存在</span><span class="life-value" id="lifeDays">-- 天</span><span class="life-label">⏰ 提醒</span><span class="life-value" id="reminderStatus">--</span></div>
+  <div class="life-stats"><span class="life-label">📅 我在世界已经</span><span class="life-value" id="lifeDays">-- 天</span><span class="life-label">⏰ 提醒</span><span class="life-value" id="reminderStatus">--</span></div>
 
   <!-- 磁贴 - 3个 -->
   <div class="tiles-grid">
-   <div class="tile-card" onclick="openSchedule()"><div class="tile-sym">📅</div><div class="tile-title">日程</div><div class="tile-items" id="scheduleTileItems"><div class="tile-empty">暂无日程</div></div></div>
-   <div class="tile-card" onclick="openNotes()"><div class="tile-sym">📝</div><div class="tile-title">便签</div><div class="tile-items" id="noteTileItems"><div class="tile-empty">暂无便签</div></div></div>
-   <div class="tile-card" onclick="openRecord()"><div class="tile-sym">💭</div><div class="tile-title">随手记</div><div class="tile-items" id="quickTileItems"><div class="tile-empty">点击记录灵感</div></div></div>
+   <div class="tile-card" onclick="openSchedule()"><div class="tile-sym">📅</div><div class="tile-info"><div class="tile-title">日程</div><div class="tile-items" id="scheduleTileItems"><div class="tile-empty">暂无日程</div></div></div></div>
+   <div class="tile-card" onclick="openNotes()"><div class="tile-sym">📝</div><div class="tile-info"><div class="tile-title">便签</div><div class="tile-items" id="noteTileItems"><div class="tile-empty">暂无便签</div></div></div></div>
+   <div class="tile-card" onclick="openRecord()"><div class="tile-sym">💭</div><div class="tile-info"><div class="tile-title">随手记</div><div class="tile-items" id="quickTileItems"><div class="tile-empty">点击记录灵感</div></div></div></div>
   </div>
 
-  <!-- 操作按钮行 - 电脑端只保留搜索和设置（去掉随手记按钮） -->
+  <!-- 操作按钮行 - 底部不超出屏幕 -->
   <div class="actions-row">
    <button class="action-btn" onclick="openSearch()"><span class="icon">⌕</span><span class="label">搜索</span></button>
    <button class="action-btn" onclick="openReminderSettings()"><span class="icon">⏰</span><span class="label">提醒</span></button>
@@ -401,7 +460,7 @@ body {
 <!-- AI 对话浮层 -->
 <div id="aiChatPanel" class="ai-chat-panel hidden">
  <div class="ai-chat-header"><span>✨ NikO 助手</span><button onclick="closeAIChat()" style="background:none; border:none; color:white; font-size:1.1rem; cursor:pointer">✕</button></div>
- <div id="aiChatMessages" class="ai-chat-messages"><div class="ai-msg ai"><div class="bubble">你好！我是 NikO，伴您身边的生活助手~</div></div></div>
+ <div id="aiChatMessages" class="ai-chat-messages"><div class="ai-msg ai"><div class="bubble">你好！我是 NikO，您的生活助手~</div></div></div>
  <div class="ai-chat-input"><input type="text" id="aiChatInput" placeholder="输入消息..." onkeypress="if(event.key==='Enter')sendAIMessage()"><button onclick="sendAIMessage()">→</button></div>
 </div>
 
@@ -409,7 +468,7 @@ body {
 <div class="modal-overlay center-modal" id="reminderModal">
  <div class="modal"><div class="modal-header"><span class="modal-title">⏰ 事项提醒</span><button class="modal-close" onclick="closeModal('reminderModal')">✕</button></div>
  <div class="form-group"><label>提醒事项</label><input type="text" id="reminderText" placeholder="例：喝水、吃药" maxlength="50"></div>
- <div class="form-group"><label>间隔时间</label><select id="reminderInterval"><option value="30">30分钟</option><option value="60">1小时</option><option value="120">2小时</option><option value="180">3小时</option><option value="240">4小时<option value=360">6小时</option></option></select></div>
+ <div class="form-group"><label>间隔时间</label><select id="reminderInterval"><option value="60">1分钟</option><option value="120">2小时</option><option value="240">4小时</option><option value="360">6小时</option></select></div>
  <div class="form-group"><label>启用提醒</label><label class="toggle-switch" style="margin-left:1rem"><input type="checkbox" id="reminderEnabled"><span class="toggle-slider"></span></label></div>
  <div class="form-actions"><button class="btn btn-primary" onclick="saveReminder()">保存</button><button class="btn btn-secondary" onclick="closeReminderSettings()">取消</button></div>
  <div id="reminderStatusText" style="margin-top:0.8rem; font-size:0.7rem; color:var(--text-muted)"></div></div>
@@ -617,3 +676,4 @@ document.getElementById('loginKey').addEventListener('keypress',e=>{if(e.key==='
 </script>
 </body>
 </html>
+```
