@@ -92,7 +92,7 @@ body {
 .datetime-time { font-family: var(--font-display); font-size: 3.2rem; font-weight: 400; letter-spacing: -0.02em; line-height: 1; margin-bottom: 0.2rem; }
 .datetime-date { font-size: 0.75rem; color: var(--text-muted); }
 
-/* 磁贴 - 透明度提高（比半透明再透明） */
+/* 磁贴 - 透明度提高 */
 .tiles-grid { 
   display: grid; 
   grid-template-columns: repeat(3, 1fr); 
@@ -166,7 +166,7 @@ body {
  color: #1a1a1a !important; 
 }
 
-/* 操作按钮行 - 底部不超出屏幕 */
+/* 操作按钮行 */
 .actions-row { 
   display: flex; 
   gap: 1rem; 
@@ -194,91 +194,39 @@ body {
 
 .logout-btn { position: fixed; top: 1rem; right: 1rem; padding: 0.35rem 0.8rem; background: rgba(255,255,255,0.7); backdrop-filter: blur(10px); border: 1px solid rgba(0,0,0,0.05); border-radius: 20px; cursor: pointer; font-size: 0.65rem; color: var(--text-muted); z-index: 100; }
 
-/* ========== 手机端专属优化 ========== */
+/* 手机端 */
 @media (max-width: 599px) {
-  /* 顶栏纯透明 + 深色字 */
-  .app-topbar {
-    background: transparent !important;
-    backdrop-filter: none !important;
-    padding: 0.3rem 0 0.5rem;
-  }
+  .app-topbar { background: transparent !important; backdrop-filter: none !important; padding: 0.3rem 0 0.5rem; }
   .topbar-logo { font-size: 1.4rem; }
   .topbar-slogan { font-size: 0.55rem; }
   .topbar-location, .topbar-weather { font-size: 0.6rem; }
-  
-  /* 时间区 */
-  .app-datetime {
-    padding: 0.4rem 0;
-  }
-  .datetime-time {
-    font-size: 2.6rem;
-    color: #1a1a1a;
-  }
-  .datetime-date {
-    font-size: 0.7rem;
-    color: #3a3a3a;
-  }
-  
-  /* 磁贴：适当缩小（不过度缩小），改为竖向列表但保持舒适尺寸 */
-  .tiles-grid { 
-    grid-template-columns: 1fr; 
-    gap: 0.7rem; 
-    margin: 0.7rem 0;
-  }
-  .tile-card { 
-    padding: 0.85rem;
-    background: rgba(255,255,255,0.5);
-    display: flex;
-    align-items: center;
-    gap: 0.8rem;
-  }
-  .tile-card .tile-sym { 
-    font-size: 1.5rem; 
-    margin-bottom: 0;
-    flex-shrink: 0;
-  }
+  .app-datetime { padding: 0.4rem 0; }
+  .datetime-time { font-size: 2.6rem; color: #1a1a1a; }
+  .datetime-date { font-size: 0.7rem; color: #3a3a3a; }
+  .tiles-grid { grid-template-columns: 1fr; gap: 0.7rem; margin: 0.7rem 0; }
+  .tile-card { padding: 0.85rem; background: rgba(255,255,255,0.5); display: flex; align-items: center; gap: 0.8rem; }
+  .tile-card .tile-sym { font-size: 1.5rem; margin-bottom: 0; flex-shrink: 0; }
   .tile-card .tile-info { flex: 1; }
   .tile-title { font-size: 0.8rem; margin-bottom: 0.3rem; }
-  .tile-items { gap: 0.2rem; }
-  .tile-text { font-size: 0.68rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .tile-empty { font-size: 0.68rem; }
-  
-  /* 新闻和生存区 */
+  .tile-text { font-size: 0.68rem; }
   .news-scroll { padding: 0.3rem 0.4rem; }
   .news-content { font-size: 0.68rem; animation: scrollNews 25s linear infinite; font-weight: 600; }
   .life-stats { padding: 0.3rem 0.4rem; }
   .life-label { font-size: 0.65rem; font-weight: 600; }
   .life-value { font-size: 0.7rem; font-weight: 700; }
-  
   .main-content { padding: 0.6rem 0.8rem 4rem; }
   .logout-btn { display: none; }
-  
-  /* 底部操作行 */
-  .actions-row { 
-    margin: 1rem 0 0.3rem;
-    gap: 0.8rem;
-  }
-  .action-btn { 
-    padding: 0.5rem 0.7rem;
-    min-width: 60px;
-  }
+  .actions-row { margin: 1rem 0 0.3rem; gap: 0.8rem; }
+  .action-btn { padding: 0.5rem 0.7rem; min-width: 60px; }
   .action-btn .icon { font-size: 1rem; }
   .action-btn .label { font-size: 0.6rem; }
-  
-  .mobile-settings-fab {
-    display: flex; position: fixed; bottom: 20px; right: 16px; width: 48px; height: 48px;
-    background: rgba(30,30,40,0.85); backdrop-filter: blur(12px); border-radius: 28px;
-    align-items: center; justify-content: center; color: white; font-size: 1.3rem;
-    cursor: pointer; z-index: 100; border: 1px solid rgba(255,255,255,0.3);
-  }
+  .mobile-settings-fab { display: flex; position: fixed; bottom: 20px; right: 16px; width: 48px; height: 48px; background: rgba(30,30,40,0.85); backdrop-filter: blur(12px); border-radius: 28px; align-items: center; justify-content: center; color: white; font-size: 1.3rem; cursor: pointer; z-index: 100; border: 1px solid rgba(255,255,255,0.3); }
   .floating-ai-ball { bottom: 80px; width: 46px; height: 46px; font-size: 1.1rem; right: 16px; }
   .ai-chat-panel { bottom: 135px; width: 290px; height: 420px; right: 16px; }
 }
-@media (min-width: 600px) { 
-  .mobile-settings-fab { display: none; }
-}
+@media (min-width: 600px) { .mobile-settings-fab { display: none; } }
 
-/* 模态框等样式 - 完整保留 */
+/* 模态框样式 */
 .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(8px); z-index: 500; display: none; align-items: flex-end; justify-content: center; }
 .modal-overlay.active { display: flex; }
 .modal-overlay.center-modal { align-items: center; }
@@ -372,6 +320,11 @@ body {
 .ai-msg.user { justify-content: flex-end; }
 .ai-msg.user .bubble { background: #1a1a2e; color: white; padding: 6px 12px; border-radius: 18px 18px 4px 18px; max-width: 80%; font-size: 0.75rem; }
 .ai-msg.ai .bubble { background: white; border: 1px solid #ddd; padding: 6px 12px; border-radius: 18px 18px 18px 4px; max-width: 80%; font-size: 0.75rem; }
+.thinking-indicator { display: inline-block; width: 6px; height: 6px; background: #999; border-radius: 50%; margin: 0 2px; animation: thinkingPulse 1.4s infinite ease-in-out; }
+.thinking-indicator:nth-child(1) { animation-delay: 0s; }
+.thinking-indicator:nth-child(2) { animation-delay: 0.2s; }
+.thinking-indicator:nth-child(3) { animation-delay: 0.4s; }
+@keyframes thinkingPulse { 0%, 60%, 100% { transform: scale(1); opacity: 0.4; } 30% { transform: scale(1.3); opacity: 1; } }
 .reminder-toast { position: fixed; bottom: 180px; left: 20px; right: 20px; max-width: 280px; background: white; border-radius: 16px; padding: 0.8rem; box-shadow: 0 8px 24px rgba(0,0,0,0.15); z-index: 300; border-left: 3px solid var(--accent); }
 .reminder-toast.hidden { display: none; }
 .confirm-dialog { position: fixed; inset: 0; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 600; display: none; align-items: center; justify-content: center; }
@@ -432,7 +385,7 @@ body {
   <div class="news-scroll" onclick="openNewsModal()"><div class="news-content" id="newsContent">📰 加载新闻中...</div></div>
 
   <!-- 生存时间 + 提醒 -->
-  <div class="life-stats"><span class="life-label">📅 我在世界已经</span><span class="life-value" id="lifeDays">-- 天</span><span class="life-label">⏰ 提醒</span><span class="life-value" id="reminderStatus">--</span></div>
+  <div class="life-stats"><span class="life-label">📅 我已存在</span><span class="life-value" id="lifeDays">-- 天</span><span class="life-label">⏰ 提醒</span><span class="life-value" id="reminderStatus">--</span></div>
 
   <!-- 磁贴 - 3个 -->
   <div class="tiles-grid">
@@ -441,14 +394,13 @@ body {
    <div class="tile-card" onclick="openRecord()"><div class="tile-sym">💭</div><div class="tile-info"><div class="tile-title">随手记</div><div class="tile-items" id="quickTileItems"><div class="tile-empty">点击记录灵感</div></div></div></div>
   </div>
 
-  <!-- 操作按钮行 - 底部不超出屏幕 -->
+  <!-- 操作按钮行 -->
   <div class="actions-row">
    <button class="action-btn" onclick="openSearch()"><span class="icon">⌕</span><span class="label">搜索</span></button>
    <button class="action-btn" onclick="openReminderSettings()"><span class="icon">⏰</span><span class="label">提醒</span></button>
    <button class="action-btn" onclick="openSettings()"><span class="icon">⚙</span><span class="label">设置</span></button>
   </div>
  </div>
- <!-- 手机悬浮设置按钮 -->
  <div class="mobile-settings-fab" onclick="openSettings()">⚙️</div>
 </div>
 
@@ -466,7 +418,7 @@ body {
 <div class="modal-overlay center-modal" id="reminderModal">
  <div class="modal"><div class="modal-header"><span class="modal-title">⏰ 事项提醒</span><button class="modal-close" onclick="closeModal('reminderModal')">✕</button></div>
  <div class="form-group"><label>提醒事项</label><input type="text" id="reminderText" placeholder="例：喝水、吃药" maxlength="50"></div>
- <div class="form-group"><label>间隔时间</label><select id="reminderInterval"><option value="60">1分钟</option><option value="120">2小时</option><option value="240">4小时</option><option value="360">6小时</option></select></div>
+ <div class="form-group"><label>间隔时间</label><select id="reminderInterval"><option value="60">1小时</option><option value="120">2小时</option><option value="240">4小时</option><option value="360">6小时</option></select></div>
  <div class="form-group"><label>启用提醒</label><label class="toggle-switch" style="margin-left:1rem"><input type="checkbox" id="reminderEnabled"><span class="toggle-slider"></span></label></div>
  <div class="form-actions"><button class="btn btn-primary" onclick="saveReminder()">保存</button><button class="btn btn-secondary" onclick="closeReminderSettings()">取消</button></div>
  <div id="reminderStatusText" style="margin-top:0.8rem; font-size:0.7rem; color:var(--text-muted)"></div></div>
@@ -642,8 +594,82 @@ function openChangeKey(){ const cfg=getData(DB_KEYS.config); if(!cfg)return; con
 function openEditBirthday(){ const cfg=getData(DB_KEYS.config)||{}; const newBd=prompt('请输入出生日期 (YYYY-MM-DD)',cfg.birthday||''); if(newBd){cfg.birthday=newBd;saveData(DB_KEYS.config,cfg);document.getElementById('settingsBirthday').innerHTML=newBd+' →';updateLifeDays();} }
 function updateLifeDays(){ const cfg=getData(DB_KEYS.config)||{}; if(cfg.birthday){ const days=Math.floor((new Date()-new Date(cfg.birthday))/86400000); document.getElementById('lifeDays').innerHTML=days+' 天'; } else document.getElementById('lifeDays').innerHTML='未设置'; }
 
-// AI对话
-function sendAIMessage(){ const input=document.getElementById('aiChatInput'); const msg=input.value.trim(); if(!msg)return; const container=document.getElementById('aiChatMessages'); container.insertAdjacentHTML('beforeend',`<div class="ai-msg user"><div class="bubble">${escapeHtml(msg)}</div></div>`); setTimeout(()=>{ container.insertAdjacentHTML('beforeend',`<div class="ai-msg ai"><div class="bubble">✨ NikO 收到：「${escapeHtml(msg)}」<br>（请先在设置中配置 API Key 获取智能回复）</div></div>`); container.scrollTop=container.scrollHeight; },500); input.value=''; container.scrollTop=container.scrollHeight; }
+// ========== AI 对话 - 完整 API 调用 ==========
+function showThinkingIndicator() {
+ return `<div style="display:flex; align-items:center; gap:4px;"><span>思考中</span><span class="thinking-indicator"></span><span class="thinking-indicator"></span><span class="thinking-indicator"></span></div>`;
+}
+
+async function sendAIMessage() {
+ const input = document.getElementById('aiChatInput');
+ const msg = input.value.trim();
+ if (!msg) return;
+ input.value = '';
+ 
+ const container = document.getElementById('aiChatMessages');
+ container.insertAdjacentHTML('beforeend', `<div class="ai-msg user"><div class="bubble">${escapeHtml(msg)}</div></div>`);
+ 
+ const thinkingId = 'thinking-' + Date.now();
+ container.insertAdjacentHTML('beforeend', `<div id="${thinkingId}" class="ai-msg ai"><div class="bubble">${showThinkingIndicator()}</div></div>`);
+ container.scrollTop = container.scrollHeight;
+ 
+ // 读取 AI 配置
+ const aiCfg = getData(DB_KEYS.aiConfig) || {};
+ const apiKey = aiCfg.apiKey;
+ const apiBase = aiCfg.apiBase || 'https://api.siliconflow.cn/v1';
+ const model = aiCfg.model || 'deepseek-ai/DeepSeek-V3';
+ 
+ if (!apiKey) {
+   const thinkingDiv = document.getElementById(thinkingId);
+   if (thinkingDiv) thinkingDiv.querySelector('.bubble').innerHTML = '⚠️ 请先在设置中配置 API Key';
+   return;
+ }
+ 
+ try {
+   const response = await fetch(apiBase.replace(/\/$/, '') + '/chat/completions', {
+     method: 'POST',
+     headers: {
+       'Content-Type': 'application/json',
+       'Authorization': `Bearer ${apiKey}`
+     },
+     body: JSON.stringify({
+       model: model,
+       messages: [
+         { role: 'system', content: '你是 NikO，一个温暖贴心的生活助手。请用简洁友好的方式回答用户的问题。' },
+         { role: 'user', content: msg }
+       ],
+       stream: false,
+       temperature: 0.7,
+       max_tokens: 1024
+     })
+   });
+   
+   const data = await response.json();
+   let reply = '抱歉，我暂时无法回答。';
+   
+   if (data && data.choices && data.choices[0] && data.choices[0].message) {
+     reply = data.choices[0].message.content;
+   } else if (data && data.error) {
+     reply = `API 错误：${data.error.message || '未知错误'}`;
+   }
+   
+   const thinkingDiv = document.getElementById(thinkingId);
+   if (thinkingDiv) thinkingDiv.querySelector('.bubble').innerHTML = escapeHtml(reply);
+   container.scrollTop = container.scrollHeight;
+   
+   // 保存历史记录
+   let aiHistory = getData(DB_KEYS.aiHistory) || [];
+   aiHistory.unshift({ id: Date.now(), question: msg, answer: reply, time: Date.now() });
+   if (aiHistory.length > 50) aiHistory.pop();
+   saveData(DB_KEYS.aiHistory, aiHistory);
+   
+ } catch (error) {
+   console.error('AI API 调用失败:', error);
+   const thinkingDiv = document.getElementById(thinkingId);
+   if (thinkingDiv) thinkingDiv.querySelector('.bubble').innerHTML = `网络错误：${error.message}<br>请检查 API 配置或网络连接`;
+   container.scrollTop = container.scrollHeight;
+ }
+}
+
 function closeAIChat(){ document.getElementById('aiChatPanel').classList.add('hidden'); }
 document.getElementById('aiFloatingBall').onclick=()=>document.getElementById('aiChatPanel').classList.toggle('hidden');
 
@@ -674,4 +700,3 @@ document.getElementById('loginKey').addEventListener('keypress',e=>{if(e.key==='
 </script>
 </body>
 </html>
-```
