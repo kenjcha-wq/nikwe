@@ -729,6 +729,37 @@
     </div>
   </div>
 
+  <!-- ================= 工作流条目编辑弹窗 ================= -->
+  <div id="notesEditModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
+    <div class="bg-white dark:bg-[#1a1a1a] border border-zinc-200 dark:border-zinc-800 rounded-lg w-full max-w-[480px] shadow-2xl overflow-hidden">
+      <div class="p-3 border-b border-zinc-100 dark:border-zinc-800 flex items-center justify-between">
+        <span class="text-xs font-semibold text-zinc-800 dark:text-zinc-100">编辑工作流条目</span>
+        <button onclick="XiangKuApp.modules.notes.closeEdit()" class="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 text-xs">✕</button>
+      </div>
+      <form onsubmit="XiangKuApp.modules.notes.saveEdit(event)" class="p-3 sm:p-4 space-y-3">
+        <input type="hidden" id="notesEditFormId" value="" />
+        <div>
+          <label class="block text-[11px] text-zinc-500 dark:text-zinc-400 mb-1">内容</label>
+          <textarea id="notesEditFormContent" rows="5" placeholder="条目内容..." class="w-full p-2 text-xs bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded focus:outline-none resize-none leading-relaxed text-zinc-800 dark:text-zinc-100" required></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[11px] text-zinc-500 dark:text-zinc-400 mb-1">工作流分区</label>
+            <select id="notesEditFormType" class="w-full h-8 text-xs px-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded focus:outline-none text-zinc-800 dark:text-zinc-100"></select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-zinc-500 dark:text-zinc-400 mb-1">日期</label>
+            <input type="date" id="notesEditFormDate" class="w-full h-8 text-xs px-2 bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded focus:outline-none text-zinc-800 dark:text-zinc-100" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-1">
+          <button type="button" onclick="XiangKuApp.modules.notes.closeEdit()" class="h-8 text-xs px-3.5 border border-zinc-200 dark:border-zinc-700 rounded text-zinc-600 dark:text-zinc-300">取消</button>
+          <button type="submit" class="h-8 text-xs px-4 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 rounded font-medium shadow-sm">保存修改</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- ================= 知识库新建/编辑弹窗 ================= -->
   <div id="knowledgeModal" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-2 sm:p-4">
     <div class="bg-white dark:bg-[#1a1a1a] border border-zinc-200 dark:border-zinc-800 rounded-lg w-full max-w-[500px] shadow-2xl overflow-hidden">
@@ -1601,10 +1632,15 @@ ${context}
           P.push(`【工作空间/项目（${db.workspace.length}个）】\n` + (db.workspace.map(w => `· ${w.name}${w.description ? '：' + w.description : ''}`).join('\n') || '（暂无）'));
         }
 
-        /* 知识库：标题全列 + 节选，注明可点名深读 */
+        /* 知识库：标题全列 + 节选，注明可点名深读
+         * 「全部/首页」场景自动注入时排除设为隐藏的分区；scope=knowledge（点名看知识库）则全量 */
         if (scope !== 'profile' && scope !== 'bujo') {
-          const kn = (db.knowledge || []).slice().sort((a, b) => (b.id || '').localeCompare(a.id || '')).slice(0, 60);
-          P.push(`【知识库（共${db.knowledge.length}篇；已列出${kn.length}篇标题；如需要某篇全文请告诉 NIK 标题）】\n` +
+          const hiddenCat = {};
+          (db.knowledgeCategories || []).forEach(c => { if (c.hidden) hiddenCat[c.id] = true; });
+          const pool = (db.knowledge || []).filter(k => scope === 'knowledge' ? true : !hiddenCat[k.category]);
+          const hideN = (db.knowledge || []).length - pool.length;
+          const kn = pool.slice().sort((a, b) => (b.id || '').localeCompare(a.id || '')).slice(0, 60);
+          P.push(`【知识库（共${pool.length}篇${hideN > 0 ? '；另有' + hideN + '篇位于隐藏分区，点名标题即可查' : ''}；已列出${kn.length}篇标题；如需要某篇全文请告诉 NIK 标题）】\n` +
             (kn.map(k => `·《${k.title || '未命名'}》（${k.category || '未分类'}${k.workspaceId && k.workspaceId !== 'general' ? '｜' + this.wsName(k.workspaceId) : ''}）：${String(k.content || '').replace(/\s+/g, ' ').slice(0, 220)}`).join('\n') || '（暂无）'));
         }
 
@@ -1722,6 +1758,11 @@ ${context}
                   onchange="XiangKuApp.modules.categoryManager.renameCategory(${index}, this.value)"
                   class="flex-1 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 px-2 py-1 rounded text-xs focus:outline-none text-zinc-800 dark:text-zinc-100"
                 />
+                ${this.currentType === 'knowledgeCategories' ? `
+                  <button onclick="XiangKuApp.modules.categoryManager.toggleHidden(${index})" title="${cat.hidden ? '已在首页/全部视图中隐藏，点此恢复展示' : '在首页/全部视图中隐藏此分区内容（点分区标签仍可主动查看）'}" class="h-6 px-1.5 text-[10px] rounded whitespace-nowrap ${cat.hidden ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-900' : 'text-zinc-400 hover:text-amber-600 border border-transparent hover:border-amber-200 dark:hover:border-amber-900'}">
+                    ${cat.hidden ? '👁 已隐藏' : '👁 隐藏'}
+                  </button>
+                ` : ''}
                 ${isSystem ? '<span class="text-[10px] text-zinc-400 px-1">核心</span>' : `
                   <button onclick="XiangKuApp.modules.categoryManager.deleteCategory(${index})" class="w-6 h-6 flex items-center justify-center text-zinc-400 hover:text-red-500 text-xs">✕</button>
                 `}
@@ -1762,6 +1803,14 @@ ${context}
             }
 
             XiangKuApp.db[this.currentType].splice(index, 1);
+            XiangKuApp.saveStorage();
+            this.renderList();
+          },
+
+          toggleHidden(index) {
+            const cat = XiangKuApp.db[this.currentType][index];
+            if (!cat) return;
+            cat.hidden = !cat.hidden;
             XiangKuApp.saveStorage();
             this.renderList();
           },
@@ -2095,6 +2144,8 @@ ${context}
                     <span class="text-[10px] px-1.5 py-0.2 rounded border bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-200 dark:border-zinc-700">${catName}</span>
                   </div>
                   <div class="flex items-center gap-1">
+                    <button onclick="XiangKuApp.modules.notes.openEdit('${note.id}')" class="text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 text-xs px-1" title="编辑本条内容/分区/日期">编辑</button>
+                    <button onclick="XiangKuApp.modules.notes.copyNote('${note.id}')" class="text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 text-xs px-1" title="复制本条内容到剪贴板">复制</button>
                     <button onclick="XiangKuApp.modules.notes.toggleArchive('${note.id}')" class="text-zinc-400 hover:text-amber-600 text-xs px-1" title="${note.archived ? '恢复到今日工作流' : '办完并归档'}">
                       ${note.archived ? '恢复' : '归档'}
                     </button>
@@ -2155,6 +2206,48 @@ ${context}
               XiangKuApp.saveStorage();
               XiangKuApp.renderAll();
             }
+          },
+
+          copyNote(id) {
+            const note = XiangKuApp.db.notes.find(n => n.id === id);
+            if (!note) return;
+            XiangKuApp.copyText(note.content || '', '✓ 条目内容已复制');
+          },
+
+          openEdit(id) {
+            const note = XiangKuApp.db.notes.find(n => n.id === id);
+            if (!note) return;
+            const typeSelect = document.getElementById('notesEditFormType');
+            typeSelect.innerHTML = '';
+            (XiangKuApp.db.noteCategories || []).forEach(cat => {
+              const opt = document.createElement('option');
+              opt.value = cat.id;
+              opt.innerText = cat.name;
+              if (cat.id === note.type) opt.selected = true;
+              typeSelect.appendChild(opt);
+            });
+            document.getElementById('notesEditFormId').value = note.id;
+            document.getElementById('notesEditFormContent').value = note.content || '';
+            document.getElementById('notesEditFormDate').value = note.date || '';
+            document.getElementById('notesEditModal').classList.remove('hidden');
+          },
+
+          closeEdit() {
+            document.getElementById('notesEditModal').classList.add('hidden');
+          },
+
+          saveEdit(e) {
+            e.preventDefault();
+            const id = document.getElementById('notesEditFormId').value;
+            const note = XiangKuApp.db.notes.find(n => n.id === id);
+            if (!note) return;
+            note.content = document.getElementById('notesEditFormContent').value.trim();
+            note.type = document.getElementById('notesEditFormType').value;
+            const nd = document.getElementById('notesEditFormDate').value;
+            if (nd) note.date = nd;
+            XiangKuApp.saveStorage();
+            this.closeEdit();
+            XiangKuApp.renderAll();
           }
         },
 
@@ -2175,8 +2268,10 @@ ${context}
             (XiangKuApp.db.knowledgeCategories || []).forEach(cat => {
               const btn = document.createElement('button');
               const isActive = XiangKuApp.currentKnowledgeCategory === cat.id;
-              btn.className = `knowledge-tab h-6 px-2.5 rounded ${isActive ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400'} shrink-0 flex items-center`;
-              btn.innerText = cat.name;
+              /* 设为首页隐藏的分区：标签弱化但可点（主动查看该分区时仍展示内容） */
+              btn.className = `knowledge-tab h-6 px-2.5 rounded ${isActive ? 'bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 font-medium' : cat.hidden ? 'text-zinc-300 dark:text-zinc-600 hover:text-zinc-500 dark:hover:text-zinc-400 opacity-80' : 'hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-500 dark:text-zinc-400'} shrink-0 flex items-center gap-1`;
+              if (cat.hidden) btn.title = '已设为「首页隐藏」，全部视图中不展示；点此仍可查看该分区';
+              btn.innerHTML = cat.hidden ? `<span class="text-[9px]">👁</span>${cat.name}` : cat.name;
               btn.onclick = () => this.filter(cat.id);
               container.appendChild(btn);
             });
@@ -2197,18 +2292,26 @@ ${context}
             const container = document.getElementById('knowledgeCardList');
             container.innerHTML = '';
 
+            /* 分区隐藏表：hidden=true 的分区在「全部/首页」视图不展示 */
+            const catHidden = {};
+            (XiangKuApp.db.knowledgeCategories || []).forEach(c => { catHidden[c.id] = !!c.hidden; });
+            const isAllView = XiangKuApp.currentKnowledgeCategory === 'all';
+
             let list = XiangKuApp.db.knowledge.filter(k => {
               const matchWs = (XiangKuApp.currentWorkspaceId === 'all' || k.workspaceId === XiangKuApp.currentWorkspaceId);
-              const matchCat = (XiangKuApp.currentKnowledgeCategory === 'all' || k.category === XiangKuApp.currentKnowledgeCategory);
+              const matchCat = isAllView
+                ? !catHidden[k.category]
+                : (k.category === XiangKuApp.currentKnowledgeCategory);
               const matchKw = !filterKw || k.title.toLowerCase().includes(filterKw.toLowerCase()) || k.content.toLowerCase().includes(filterKw.toLowerCase());
               return matchWs && matchCat && matchKw;
             });
 
             if (list.length === 0) {
+              const hasHiddenAny = (XiangKuApp.db.knowledge || []).some(k => catHidden[k.category]);
               container.innerHTML = `
                 <div class="h-48 flex flex-col items-center justify-center text-zinc-400 text-xs gap-1">
                   <i data-lucide="layers" class="w-5 h-5 text-zinc-300 dark:text-zinc-700 stroke-1"></i>
-                  <span>暂无该分类知识条目</span>
+                  <span>${isAllView && hasHiddenAny ? '本页未展示已设为「隐藏」的分区 · 点上方分区标签可查看' : '暂无该分类知识条目'}</span>
                 </div>
               `;
               lucide.createIcons();
