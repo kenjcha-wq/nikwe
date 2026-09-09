@@ -303,6 +303,14 @@
         <div id="knowledgeTabsContainer" class="flex items-center gap-1 overflow-x-auto no-scrollbar flex-1">
         </div>
         <button 
+          onclick="XiangKuApp.modules.knowledge.toggleHiddenView()" 
+          id="kbHiddenToggleBtn"
+          title="隐藏单条知识管理"
+          class="h-6 px-1.5 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center shrink-0"
+        >
+          <i data-lucide="eye-off" class="w-3.5 h-3.5"></i>
+        </button>
+        <button 
           onclick="XiangKuApp.modules.categoryManager.openModal('knowledgeCategories', '知识库分区管理')" 
           title="管理知识库分区"
           class="h-6 px-1.5 text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-200 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 flex items-center shrink-0 ml-1"
@@ -1637,10 +1645,11 @@ ${context}
         if (scope !== 'profile' && scope !== 'bujo') {
           const hiddenCat = {};
           (db.knowledgeCategories || []).forEach(c => { if (c.hidden) hiddenCat[c.id] = true; });
-          const pool = (db.knowledge || []).filter(k => scope === 'knowledge' ? true : !hiddenCat[k.category]);
+          /* 自动注入排除「隐藏分区 + 单条隐藏」；scope=knowledge 点名看知识库仍全量 */
+          const pool = (db.knowledge || []).filter(k => scope === 'knowledge' ? true : (!hiddenCat[k.category] && !k.hidden));
           const hideN = (db.knowledge || []).length - pool.length;
           const kn = pool.slice().sort((a, b) => (b.id || '').localeCompare(a.id || '')).slice(0, 60);
-          P.push(`【知识库（共${pool.length}篇${hideN > 0 ? '；另有' + hideN + '篇位于隐藏分区，点名标题即可查' : ''}；已列出${kn.length}篇标题；如需要某篇全文请告诉 NIK 标题）】\n` +
+          P.push(`【知识库（共${pool.length}篇${hideN > 0 ? '；另有' + hideN + '篇已隐藏（分区或单条），点名标题即可查' : ''}；已列出${kn.length}篇标题；如需要某篇全文请告诉 NIK 标题）】\n` +
             (kn.map(k => `·《${k.title || '未命名'}》（${k.category || '未分类'}${k.workspaceId && k.workspaceId !== 'general' ? '｜' + this.wsName(k.workspaceId) : ''}）：${String(k.content || '').replace(/\s+/g, ' ').slice(0, 220)}`).join('\n') || '（暂无）'));
         }
 
@@ -2253,6 +2262,9 @@ ${context}
 
         // ========== 知识库 ==========
         knowledge: {
+          /* 单条隐藏视图：true 时列表只列出 hidden 条目（供恢复），false 为正常视图 */
+          showHidden: false,
+
           renderTabs() {
             const container = document.getElementById('knowledgeTabsContainer');
             if (!container) return;
@@ -2296,25 +2308,41 @@ ${context}
             const catHidden = {};
             (XiangKuApp.db.knowledgeCategories || []).forEach(c => { catHidden[c.id] = !!c.hidden; });
             const isAllView = XiangKuApp.currentKnowledgeCategory === 'all';
+            /* 无任何隐藏单条时自动退出隐藏视图（先复位再取视图态，避免本次渲染仍按旧视图过滤） */
+            if (this.showHidden && !(XiangKuApp.db.knowledge || []).some(k => !!k.hidden)) this.showHidden = false;
+            const showH = !!this.showHidden;
 
             let list = XiangKuApp.db.knowledge.filter(k => {
               const matchWs = (XiangKuApp.currentWorkspaceId === 'all' || k.workspaceId === XiangKuApp.currentWorkspaceId);
+              const matchKw = !filterKw || k.title.toLowerCase().includes(filterKw.toLowerCase()) || k.content.toLowerCase().includes(filterKw.toLowerCase());
+              if (showH) return matchWs && !!k.hidden && matchKw;
+              if (k.hidden) return false; /* 单条隐藏：不出现在首页/全部/分区/搜索，只经右上「眼睛」查看 */
               const matchCat = isAllView
                 ? !catHidden[k.category]
                 : (k.category === XiangKuApp.currentKnowledgeCategory);
-              const matchKw = !filterKw || k.title.toLowerCase().includes(filterKw.toLowerCase()) || k.content.toLowerCase().includes(filterKw.toLowerCase());
               return matchWs && matchCat && matchKw;
             });
 
             if (list.length === 0) {
-              const hasHiddenAny = (XiangKuApp.db.knowledge || []).some(k => catHidden[k.category]);
+              const hidCount = (XiangKuApp.db.knowledge || []).filter(k => !!k.hidden).length;
+              const hasCatHidden = (XiangKuApp.db.knowledge || []).some(k => catHidden[k.category]);
+              let tip = '暂无该分类知识条目';
+              if (showH) {
+                tip = '没有已隐藏的条目';
+              } else if (isAllView && (hidCount > 0 || hasCatHidden)) {
+                const parts = [];
+                if (hidCount > 0) parts.push('单条已隐藏 ' + hidCount + ' 条');
+                if (hasCatHidden) parts.push('隐藏分区');
+                tip = '首页未展示：' + parts.join('、') + ' · 点右上「眼睛」或分区标签可查看';
+              }
               container.innerHTML = `
                 <div class="h-48 flex flex-col items-center justify-center text-zinc-400 text-xs gap-1">
                   <i data-lucide="layers" class="w-5 h-5 text-zinc-300 dark:text-zinc-700 stroke-1"></i>
-                  <span>${isAllView && hasHiddenAny ? '本页未展示已设为「隐藏」的分区 · 点上方分区标签可查看' : '暂无该分类知识条目'}</span>
+                  <span>${tip}</span>
                 </div>
               `;
               lucide.createIcons();
+              this.updateHiddenToggle();
               return;
             }
 
@@ -2338,13 +2366,17 @@ ${context}
                   </div>
                 </div>
                 <pre class="text-[11px] text-zinc-600 dark:text-zinc-300 bg-[#FAFAFA] dark:bg-[#121212] p-2 rounded border border-zinc-100 dark:border-zinc-800 font-mono whitespace-pre-wrap leading-relaxed max-h-24 overflow-y-auto">${item.content}</pre>
-                <div class="flex items-center justify-end text-[10px] pt-0.5">
+                <div class="flex items-center justify-between text-[10px] pt-0.5">
+                  <button onclick="XiangKuApp.modules.knowledge.toggleHide('${item.id}')" class="text-zinc-400 dark:text-zinc-500 hover:text-amber-600 flex items-center gap-1" title="${item.hidden ? '恢复：放回首页展示' : '隐藏：此条不再出现在首页/列表'}">
+                    <i data-lucide="${item.hidden ? 'eye' : 'eye-off'}" class="w-3 h-3"></i>${item.hidden ? '恢复显示' : '隐藏'}
+                  </button>
                   <button onclick="XiangKuApp.modules.knowledge.copy('${item.id}')" class="text-zinc-500 dark:text-zinc-400 hover:underline">复制内容</button>
                 </div>
               `;
               container.appendChild(card);
             });
             lucide.createIcons();
+            this.updateHiddenToggle();
           },
 
           filter(catId) {
@@ -2418,6 +2450,38 @@ ${context}
             const item = XiangKuApp.db.knowledge.find(k => k.id === id);
             if (!item) return;
             navigator.clipboard.writeText(item.content).then(() => alert('知识条目已复制'));
+          },
+
+          /* 单条隐藏/恢复：写条目 hidden 标志并重绘 */
+          toggleHide(id) {
+            const item = XiangKuApp.db.knowledge.find(k => k.id === id);
+            if (!item) return;
+            item.hidden = !item.hidden;
+            XiangKuApp.saveStorage();
+            this.render();
+          },
+
+          /* 切换「已隐藏」视图：只列出隐藏单条供恢复 */
+          toggleHiddenView() {
+            this.showHidden = !this.showHidden;
+            this.render();
+          },
+
+          /* 更新右上眼睛按钮的计数与激活态 */
+          updateHiddenToggle() {
+            const btn = document.getElementById('kbHiddenToggleBtn');
+            if (!btn) return;
+            const n = (XiangKuApp.db.knowledge || []).filter(k => !!k.hidden).length;
+            btn.title = this.showHidden
+              ? '返回正常视图（已隐藏 ' + n + ' 条）'
+              : (n > 0 ? '已隐藏 ' + n + ' 条 · 点击查看/恢复' : '隐藏单条知识（不在首页展示）');
+            if (this.showHidden) {
+              btn.style.background = '#fde68a';
+              btn.style.color = '#92400e';
+            } else {
+              btn.style.background = '';
+              btn.style.color = '';
+            }
           }
         },
 
